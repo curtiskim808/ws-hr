@@ -87,9 +87,46 @@ Rails.application.routes.draw do
       #   ?include=position_template,location - Include relationships
       resources :job_postings
 
+      # T110: Applicants (US3)
+      # ENDPOINTS:
+      # GET    /api/v1/applicants      - List all applicants
+      # GET    /api/v1/applicants/:id  - Get single applicant
+      # POST   /api/v1/applicants      - Create applicant manually
+      # PATCH  /api/v1/applicants/:id  - Update applicant (flag, contact info)
+      #
+      # AUTHENTICATION: Required (via BaseController)
+      # AUTHORIZATION: Admin or Hiring Manager only for create/update
+      # BRAND SCOPING: Automatic (via BrandScoped concern)
+      #
+      # QUERY PARAMETERS (index):
+      #   ?source=linkedin - Filter by source
+      #   ?flagged=true - Filter flagged applicants
+      resources :applicants, only: [:index, :show, :create, :update]
+
+      # T110: Applications (US3)
+      # ENDPOINTS:
+      # GET    /api/v1/applications      - List all applications
+      # GET    /api/v1/applications/:id  - Get single application
+      # POST   /api/v1/applications      - Submit application (PUBLIC - no auth)
+      # PATCH  /api/v1/applications/:id  - Update/perform action (hire, reject, advance_stage)
+      # DELETE /api/v1/applications/:id  - Archive application
+      #
+      # AUTHENTICATION: Required EXCEPT for POST (public submission)
+      # AUTHORIZATION: Admin or Hiring Manager only for PATCH/DELETE
+      # BRAND SCOPING: Automatic (via BrandScoped concern)
+      #
+      # ACTION TYPES (via PATCH):
+      #   PATCH /api/v1/applications/:id { "action_type": "hire" }
+      #   PATCH /api/v1/applications/:id { "action_type": "reject", "rejection_reason": "..." }
+      #   PATCH /api/v1/applications/:id { "action_type": "advance_stage", "stage_id": 2 }
+      #
+      # QUERY PARAMETERS (index):
+      #   ?status=in_progress - Filter by status
+      #   ?job_posting_id=1 - Filter by job posting
+      #   ?applicant_id=1 - Filter by applicant
+      resources :applications
+
       # FUTURE RESOURCE ROUTES
-      # - resources :applications          # US3: Applications
-      # - resources :applicants            # US3: Applicants
       # - resources :availability_slots    # US6: Availability
       # - resources :interviews            # US7: Interviews
     end
