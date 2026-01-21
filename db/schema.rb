@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_01_21_011157) do
+ActiveRecord::Schema[8.0].define(version: 2026_01_21_031240) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -22,6 +22,32 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_21_011157) do
     t.datetime "updated_at", null: false
     t.index ["name"], name: "index_brands_on_name"
     t.index ["subdomain"], name: "index_brands_on_subdomain", unique: true
+  end
+
+  create_table "hiring_processes", force: :cascade do |t|
+    t.bigint "brand_id", null: false
+    t.string "name", null: false
+    t.text "description"
+    t.boolean "is_default", default: false, null: false
+    t.boolean "active", default: true, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["brand_id", "active"], name: "index_hiring_processes_on_brand_and_active"
+    t.index ["brand_id", "is_default"], name: "index_hiring_processes_on_brand_and_default"
+    t.index ["brand_id"], name: "index_hiring_processes_on_brand_id"
+  end
+
+  create_table "hiring_stages", force: :cascade do |t|
+    t.bigint "hiring_process_id", null: false
+    t.string "name", null: false
+    t.integer "stage_type", default: 0, null: false
+    t.integer "position", null: false
+    t.boolean "required", default: true, null: false
+    t.jsonb "settings", default: {}, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["hiring_process_id", "position"], name: "index_hiring_stages_on_process_and_position", unique: true
+    t.index ["hiring_process_id"], name: "index_hiring_stages_on_hiring_process_id"
   end
 
   create_table "job_postings", force: :cascade do |t|
@@ -107,6 +133,8 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_21_011157) do
     t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
   end
 
+  add_foreign_key "hiring_processes", "brands"
+  add_foreign_key "hiring_stages", "hiring_processes"
   add_foreign_key "job_postings", "brands"
   add_foreign_key "job_postings", "position_templates"
   add_foreign_key "location_assignments", "locations"
