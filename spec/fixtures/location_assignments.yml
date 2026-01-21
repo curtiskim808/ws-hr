@@ -1,0 +1,46 @@
+# Location Assignment Fixtures - User to Location mapping
+#
+# PURPOSE: Assign users (hiring managers, interviewers) to specific locations
+# USAGE: Used for location-based authorization and notification routing
+#
+# BUSINESS RULE: Hiring managers receive notifications for applications at their assigned locations
+
+# ACME HQ Assignment - Hiring Manager assigned to SF HQ
+# PURPOSE: Test that hiring manager receives notifications for SF HQ job applications
+acme_hm_sf_hq:
+  user: acme_hiring_manager
+  location: acme_hq
+  created_at: <%= 30.days.ago %>
+  updated_at: <%= 30.days.ago %>
+
+# ACME HQ Assignment - Interviewer assigned to SF HQ
+# PURPOSE: Test interviewer visibility for SF HQ interviews
+acme_interviewer_sf_hq:
+  user: acme_interviewer
+  location: acme_hq
+  created_at: <%= 25.days.ago %>
+  updated_at: <%= 25.days.ago %>
+
+# ACME REMOTE Assignment - Hiring Manager also assigned to remote
+# PURPOSE: Test that hiring managers can be assigned to multiple locations
+acme_hm_remote:
+  user: acme_hiring_manager
+  location: acme_remote
+  created_at: <%= 30.days.ago %>
+  updated_at: <%= 30.days.ago %>
+
+# ACME Admin Assignment - Admin assigned to SF HQ
+# PURPOSE: Admins may also have location assignments for notification routing
+acme_admin_sf_hq:
+  user: acme_admin
+  location: acme_hq
+  created_at: <%= 45.days.ago %>
+  updated_at: <%= 45.days.ago %>
+
+# GLOBEX HQ Assignment - Globex admin assigned to their HQ
+# PURPOSE: Test multi-tenant location assignment isolation
+globex_admin_hq:
+  user: globex_admin
+  location: globex_hq
+  created_at: <%= 40.days.ago %>
+  updated_at: <%= 40.days.ago %>
