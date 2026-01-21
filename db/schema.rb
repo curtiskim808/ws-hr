@@ -50,15 +50,6 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_21_031240) do
     t.index ["hiring_process_id"], name: "index_hiring_stages_on_hiring_process_id"
   end
 
-  create_table "job_postings", force: :cascade do |t|
-    t.bigint "brand_id", null: false
-    t.bigint "position_template_id", null: false
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["brand_id"], name: "index_job_postings_on_brand_id"
-    t.index ["position_template_id"], name: "index_job_postings_on_position_template_id"
-  end
-
   create_table "jwt_denylists", force: :cascade do |t|
     t.string "jti"
     t.datetime "exp"
@@ -135,8 +126,6 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_21_031240) do
 
   add_foreign_key "hiring_processes", "brands"
   add_foreign_key "hiring_stages", "hiring_processes"
-  add_foreign_key "job_postings", "brands"
-  add_foreign_key "job_postings", "position_templates"
   add_foreign_key "location_assignments", "locations"
   add_foreign_key "location_assignments", "users"
   add_foreign_key "locations", "brands"

@@ -55,7 +55,7 @@ group :development, :test do
 
   # Interactive debugging console [https://github.com/pry/pry]
   gem "pry"
-
+  gem "pry-byebug"
   # Static analysis for security vulnerabilities [https://brakemanscanner.org/]
   gem "brakeman", require: false
 

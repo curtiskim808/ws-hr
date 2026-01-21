@@ -1,0 +1,226 @@
+# Hiring Stage Fixtures - T073
+#
+# FIXTURES PHILOSOPHY:
+# - Fixtures represent realistic, stable test data
+# - Stages belong to hiring processes and are ordered by position
+# - Named semantically to make tests readable
+# - Use ERB for dynamic values like timestamps
+#
+# FIXTURE NAMING:
+# - Format: <process_name>_<stage_name>
+# - Examples: default_application, default_phone_screen, executive_board_interview
+# - Makes test code self-documenting: hiring_stages(:default_application)
+#
+# STAGE TYPES:
+# - application (0): Initial submission and review stages
+# - interview (1): Interview and assessment stages
+# - decision (2): Final decision, offer, and onboarding stages
+
+# =============================================================================
+# DEFAULT PROCESS STAGES (4 stages)
+# =============================================================================
+# Standard hiring workflow for most roles
+
+# STAGE 1: Application Review
+# TYPE: application
+# PURPOSE: Initial screening of applications
+default_application:
+  hiring_process: default_process
+  name: Application Review
+  stage_type: 0  # application
+  position: 1
+  required: true
+  settings: { "auto_advance": false, "review_deadline_days": 7 }
+  created_at: <%= 60.days.ago %>
+  updated_at: <%= 10.days.ago %>
+
+# STAGE 2: Phone Screen
+# TYPE: interview
+# PURPOSE: Quick phone call to assess basic fit
+default_phone_screen:
+  hiring_process: default_process
+  name: Phone Screen
+  stage_type: 1  # interview
+  position: 2
+  required: true
+  settings: { "duration_minutes": 30, "interview_type": "phone" }
+  created_at: <%= 60.days.ago %>
+  updated_at: <%= 10.days.ago %>
+
+# STAGE 3: Technical Interview
+# TYPE: interview
+# PURPOSE: In-depth technical assessment
+default_technical:
+  hiring_process: default_process
+  name: Technical Interview
+  stage_type: 1  # interview
+  position: 3
+  required: true
+  settings: { "duration_minutes": 90, "interview_type": "technical" }
+  created_at: <%= 60.days.ago %>
+  updated_at: <%= 10.days.ago %>
+
+# STAGE 4: Final Decision
+# TYPE: decision
+# PURPOSE: Make hiring decision
+default_decision:
+  hiring_process: default_process
+  name: Final Decision
+  stage_type: 2  # decision
+  position: 4
+  required: true
+  settings: { "requires_approval": true }
+  created_at: <%= 60.days.ago %>
+  updated_at: <%= 10.days.ago %>
+
+# =============================================================================
+# EXECUTIVE PROCESS STAGES (4 stages)
+# =============================================================================
+# Executive hiring workflow for senior leadership
+
+# STAGE 1: Application Review
+executive_application:
+  hiring_process: executive_process
+  name: Application Review
+  stage_type: 0  # application
+  position: 1
+  required: true
+  settings: { "auto_advance": false, "review_deadline_days": 3 }
+  created_at: <%= 45.days.ago %>
+  updated_at: <%= 5.days.ago %>
+
+# STAGE 2: Executive Interview
+executive_interview:
+  hiring_process: executive_process
+  name: Executive Interview
+  stage_type: 1  # interview
+  position: 2
+  required: true
+  settings: { "duration_minutes": 60, "interview_type": "executive" }
+  created_at: <%= 45.days.ago %>
+  updated_at: <%= 5.days.ago %>
+
+# STAGE 3: Board Interview
+executive_board_interview:
+  hiring_process: executive_process
+  name: Board Interview
+  stage_type: 1  # interview
+  position: 3
+  required: true
+  settings: { "duration_minutes": 120, "interview_type": "panel" }
+  created_at: <%= 45.days.ago %>
+  updated_at: <%= 5.days.ago %>
+
+# STAGE 4: Final Decision
+executive_decision:
+  hiring_process: executive_process
+  name: Final Decision
+  stage_type: 2  # decision
+  position: 4
+  required: true
+  settings: { "requires_approval": true, "board_approval_required": true }
+  created_at: <%= 45.days.ago %>
+  updated_at: <%= 5.days.ago %>
+
+# =============================================================================
+# INTERNSHIP PROCESS STAGES (3 stages)
+# =============================================================================
+# Simplified workflow for internship positions
+
+# STAGE 1: Application Review
+internship_application:
+  hiring_process: internship_process
+  name: Application Review
+  stage_type: 0  # application
+  position: 1
+  required: true
+  settings: { "auto_advance": false, "review_deadline_days": 5 }
+  created_at: <%= 30.days.ago %>
+  updated_at: <%= 3.days.ago %>
+
+# STAGE 2: Group Interview
+internship_group_interview:
+  hiring_process: internship_process
+  name: Group Interview
+  stage_type: 1  # interview
+  position: 2
+  required: true
+  settings: { "duration_minutes": 60, "interview_type": "group", "max_candidates": 8 }
+  created_at: <%= 30.days.ago %>
+  updated_at: <%= 3.days.ago %>
+
+# STAGE 3: Final Decision
+internship_decision:
+  hiring_process: internship_process
+  name: Final Decision
+  stage_type: 2  # decision
+  position: 3
+  required: true
+  settings: { "requires_approval": false }
+  created_at: <%= 30.days.ago %>
+  updated_at: <%= 3.days.ago %>
+
+# =============================================================================
+# LEGACY PROCESS STAGES (2 stages)
+# =============================================================================
+# Old process kept for historical applications
+
+# STAGE 1: Application
+legacy_application:
+  hiring_process: legacy_process
+  name: Application
+  stage_type: 0  # application
+  position: 1
+  required: true
+  settings: {}
+  created_at: <%= 180.days.ago %>
+  updated_at: <%= 90.days.ago %>
+
+# STAGE 2: Interview & Decision
+legacy_interview_decision:
+  hiring_process: legacy_process
+  name: Interview & Decision
+  stage_type: 2  # decision
+  position: 2
+  required: true
+  settings: {}
+  created_at: <%= 180.days.ago %>
+  updated_at: <%= 90.days.ago %>
+
+# =============================================================================
+# GLOBEX PROCESS STAGES (3 stages)
+# =============================================================================
+# Different brand - for multi-tenant testing
+
+# STAGE 1: Application Review
+globex_application:
+  hiring_process: globex_default_process
+  name: Application Review
+  stage_type: 0  # application
+  position: 1
+  required: true
+  settings: { "auto_advance": false }
+  created_at: <%= 50.days.ago %>
+  updated_at: <%= 8.days.ago %>
+
+# STAGE 2: Interview
+globex_interview:
+  hiring_process: globex_default_process
+  name: Interview
+  stage_type: 1  # interview
+  position: 2
+  required: true
+  settings: { "duration_minutes": 45 }
+  created_at: <%= 50.days.ago %>
+  updated_at: <%= 8.days.ago %>
+
+# STAGE 3: Decision
+globex_decision:
+  hiring_process: globex_default_process
+  name: Decision
+  stage_type: 2  # decision
+  position: 3
+  required: true
+  settings: {}
+  created_at: <%= 50.days.ago %>
+  updated_at: <%= 8.days.ago %>

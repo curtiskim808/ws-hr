@@ -1,0 +1,338 @@
+# Job Posting Fixtures - T074
+#
+# FIXTURES PHILOSOPHY:
+# - Fixtures represent realistic, stable test data
+# - They're shared across all tests, reducing duplication
+# - Named semantically to make tests readable
+# - Use ERB for dynamic values like timestamps
+#
+# MULTI-TENANT DESIGN:
+# - All job postings belong to brand :acme (from brands.yml)
+# - Tests verify brand scoping works correctly
+# - Cross-brand access tests use brand :globex
+#
+# FIXTURE NAMING:
+# - Use descriptive names that indicate the posting's status and role
+# - Examples: backend_engineer_published, sales_rep_draft, intern_link_only
+# - Makes test code self-documenting: job_postings(:backend_engineer_published)
+#
+# STATUS VALUES (AASM enum):
+# - draft (0): Not yet published, work in progress
+# - published (1): Live on careers page, accepting applications
+# - link_only (2): Only accessible via direct link, not on public careers page
+# - unpublished (3): Removed from careers page, no longer accepting applications
+
+# =============================================================================
+# PUBLISHED JOB POSTINGS (Active on careers page)
+# =============================================================================
+
+# PUBLISHED: Backend Engineer
+# PURPOSE: Test published job posting with recent publish date
+# USAGE: Primary test case for active job listings
+# TEMPLATE: Software Engineer Template
+# LOCATION: San Francisco HQ
+# STATUS: published (1)
+backend_engineer_published:
+  brand: acme
+  position_template: software_engineer
+  location: acme_hq
+  hiring_process: default_process
+  job_title: Backend Engineer - Payments Team
+  description: >
+    We're looking for an experienced backend engineer to join our payments team.
+    You'll work on building scalable payment processing systems using Ruby on Rails,
+    PostgreSQL, and Redis. This is a high-impact role working on critical infrastructure.
+  requirements: >
+    - 5+ years of Ruby on Rails experience
+    - Strong understanding of payment processing and financial systems
+    - Experience with PostgreSQL, Redis, and background job processing
+    - Excellent problem-solving and debugging skills
+    - Strong communication and collaboration skills
+  status: 1  # published
+  published_at: <%= 7.days.ago %>
+  unpublished_at: null
+  closed_at: null
+  created_at: <%= 10.days.ago %>
+  updated_at: <%= 7.days.ago %>
+
+# PUBLISHED: Sales Representative (Remote)
+# PURPOSE: Test published remote job posting
+# USAGE: Test location filtering, remote positions
+# TEMPLATE: Sales Rep Template
+# LOCATION: Remote - US
+# STATUS: published (1)
+sales_rep_published:
+  brand: acme
+  position_template: sales_rep
+  location: acme_remote
+  hiring_process: default_process
+  job_title: Account Executive - Mid-Market Sales
+  description: >
+    Join our high-performing sales team to drive revenue growth in the mid-market segment.
+    You'll manage the full sales cycle from prospecting to close, working with companies
+    with 100-500 employees.
+  requirements: >
+    - 3+ years of B2B SaaS sales experience
+    - Proven track record of meeting/exceeding quota ($500K+ annual quota)
+    - Experience with mid-market sales cycles (3-6 months)
+    - Strong presentation and negotiation skills
+    - Salesforce CRM experience
+  status: 1  # published
+  published_at: <%= 14.days.ago %>
+  unpublished_at: null
+  closed_at: null
+  created_at: <%= 20.days.ago %>
+  updated_at: <%= 14.days.ago %>
+
+# PUBLISHED: Customer Support Specialist
+# PURPOSE: Test published part-time job posting
+# USAGE: Test employment type filtering, onsite positions
+# TEMPLATE: Customer Support Template
+# LOCATION: San Francisco HQ
+# STATUS: published (1)
+customer_support_published:
+  brand: acme
+  position_template: customer_support
+  location: acme_hq
+  hiring_process: default_process
+  job_title: Customer Support Specialist (Part-Time)
+  description: >
+    Provide exceptional customer support via email, chat, and phone.
+    Help customers solve problems and ensure they have a great experience with our product.
+    This is a part-time position (20-25 hours/week) based in our San Francisco office.
+  requirements: >
+    - 1+ years of customer service experience
+    - Excellent written and verbal communication
+    - Patient, empathetic, and solution-oriented
+    - Comfortable with help desk software (Zendesk, Intercom, etc.)
+    - Available for afternoon/evening shifts
+  status: 1  # published
+  published_at: <%= 5.days.ago %>
+  unpublished_at: null
+  closed_at: null
+  created_at: <%= 8.days.ago %>
+  updated_at: <%= 5.days.ago %>
+
+# =============================================================================
+# DRAFT JOB POSTINGS (Not yet published)
+# =============================================================================
+
+# DRAFT: Marketing Manager
+# PURPOSE: Test draft status, unpublished postings
+# USAGE: Test filtering by draft status, test publish! transition
+# TEMPLATE: Marketing Manager (draft template)
+# LOCATION: San Francisco HQ
+# STATUS: draft (0)
+marketing_manager_draft:
+  brand: acme
+  position_template: marketing_manager_draft
+  location: acme_hq
+  hiring_process: default_process
+  job_title: Senior Marketing Manager - Product Marketing
+  description: >
+    Lead product marketing initiatives for our SaaS platform.
+    Develop go-to-market strategies, create positioning and messaging,
+    and drive demand generation campaigns.
+  requirements: >
+    - 5+ years of product marketing experience
+    - B2B SaaS experience required
+    - Strong analytical and strategic thinking skills
+    - Experience with marketing automation tools (HubSpot, Marketo)
+    - Excellent content creation and storytelling skills
+  status: 0  # draft
+  published_at: null
+  unpublished_at: null
+  closed_at: null
+  created_at: <%= 3.days.ago %>
+  updated_at: <%= 1.day.ago %>
+
+# DRAFT: Frontend Engineer
+# PURPOSE: Test another draft posting
+# USAGE: Test draft listings, test validation before publishing
+# TEMPLATE: Software Engineer Template
+# LOCATION: Remote - US
+# STATUS: draft (0)
+frontend_engineer_draft:
+  brand: acme
+  position_template: software_engineer
+  location: acme_remote
+  hiring_process: default_process
+  job_title: Senior Frontend Engineer - React
+  description: >
+    Build beautiful, performant user interfaces for our web application.
+    Work with React, TypeScript, and modern frontend tooling to create
+    exceptional user experiences.
+  requirements: >
+    - 5+ years of frontend development experience
+    - Expert-level React and TypeScript skills
+    - Strong CSS and responsive design skills
+    - Experience with state management (Redux, Zustand)
+    - Performance optimization experience
+  status: 0  # draft
+  published_at: null
+  unpublished_at: null
+  closed_at: null
+  created_at: <%= 2.days.ago %>
+  updated_at: <%= 1.day.ago %>
+
+# =============================================================================
+# LINK-ONLY JOB POSTINGS (Direct link access only)
+# =============================================================================
+
+# LINK ONLY: DevOps Engineer
+# PURPOSE: Test link_only status (shared via direct link, not on careers page)
+# USAGE: Test status transitions, test visibility rules
+# TEMPLATE: Software Engineer Template
+# LOCATION: San Francisco HQ
+# STATUS: link_only (2)
+devops_engineer_link_only:
+  brand: acme
+  position_template: software_engineer
+  location: acme_hq
+  hiring_process: default_process
+  job_title: Senior DevOps Engineer - Infrastructure
+  description: >
+    Build and maintain our cloud infrastructure on AWS.
+    Work with Kubernetes, Terraform, and CI/CD pipelines to ensure
+    reliable, scalable, and secure deployments.
+  requirements: >
+    - 5+ years of DevOps/Infrastructure experience
+    - Strong AWS knowledge (EC2, ECS, RDS, S3)
+    - Kubernetes and Docker experience
+    - Infrastructure as Code (Terraform, CloudFormation)
+    - CI/CD pipeline experience (GitHub Actions, CircleCI)
+  status: 2  # link_only
+  published_at: <%= 30.days.ago %>
+  unpublished_at: null
+  closed_at: null
+  created_at: <%= 35.days.ago %>
+  updated_at: <%= 10.days.ago %>
+
+# =============================================================================
+# UNPUBLISHED JOB POSTINGS (Removed from careers page)
+# =============================================================================
+
+# UNPUBLISHED: Data Analyst
+# PURPOSE: Test unpublished status (was published, now closed)
+# USAGE: Test unpublish! transition, test filtering out closed positions
+# TEMPLATE: Minimal Template
+# LOCATION: San Francisco HQ
+# STATUS: unpublished (3)
+data_analyst_unpublished:
+  brand: acme
+  position_template: minimal_template
+  location: acme_hq
+  hiring_process: default_process
+  job_title: Senior Data Analyst
+  description: >
+    Analyze product and business data to drive insights and decisions.
+    Work with SQL, Python, and BI tools to create dashboards and reports.
+  requirements: >
+    - 3+ years of data analysis experience
+    - Strong SQL skills
+    - Python experience (pandas, numpy)
+    - BI tool experience (Looker, Tableau, Metabase)
+    - Strong communication skills
+  status: 3  # unpublished
+  published_at: <%= 60.days.ago %>
+  unpublished_at: <%= 5.days.ago %>
+  closed_at: null
+  created_at: <%= 65.days.ago %>
+  updated_at: <%= 5.days.ago %>
+
+# UNPUBLISHED: Product Manager
+# PURPOSE: Test another unpublished posting
+# USAGE: Test unpublish workflow, verify old postings don't show on careers page
+# TEMPLATE: Minimal Template
+# LOCATION: Remote - US
+# STATUS: unpublished (3)
+product_manager_unpublished:
+  brand: acme
+  position_template: minimal_template
+  location: acme_remote
+  hiring_process: executive_process
+  job_title: Senior Product Manager - Platform
+  description: >
+    Define product strategy and roadmap for our platform team.
+    Work with engineering, design, and customers to build impactful features.
+  requirements: >
+    - 5+ years of product management experience
+    - B2B SaaS experience required
+    - Strong technical background
+    - Excellent communication and stakeholder management
+    - Data-driven decision making
+  status: 3  # unpublished
+  published_at: <%= 90.days.ago %>
+  unpublished_at: <%= 30.days.ago %>
+  closed_at: <%= 30.days.ago %>
+  created_at: <%= 100.days.ago %>
+  updated_at: <%= 30.days.ago %>
+
+# =============================================================================
+# DIFFERENT BRAND (Globex) - Multi-Tenant Testing
+# =============================================================================
+
+# GLOBEX: Published Engineer Position
+# PURPOSE: Test multi-tenant brand scoping
+# USAGE: Verify users from :acme cannot see this posting (belongs to :globex)
+# SECURITY: Critical for testing data isolation between brands
+globex_engineer_published:
+  brand: globex
+  position_template: finance_analyst_globex
+  location: globex_hq
+  hiring_process: globex_default_process
+  job_title: Software Engineer - Full Stack
+  description: >
+    Build full-stack applications for Globex Corporation.
+    Work with modern web technologies to create business solutions.
+  requirements: >
+    - 3+ years of full-stack development
+    - JavaScript, React, Node.js experience
+    - Database experience (SQL)
+    - Strong problem-solving skills
+  status: 1  # published
+  published_at: <%= 15.days.ago %>
+  unpublished_at: null
+  closed_at: null
+  created_at: <%= 20.days.ago %>
+  updated_at: <%= 15.days.ago %>
+
+# =============================================================================
+# EDGE CASES
+# =============================================================================
+
+# EDGE CASE: Recently Published (1 day ago)
+# PURPOSE: Test days_since_published calculation
+# USAGE: Test "Posted 1 day ago" display logic
+recent_posting:
+  brand: acme
+  position_template: software_engineer
+  location: acme_hq
+  hiring_process: default_process
+  job_title: Platform Engineer - Infrastructure
+  description: Build and maintain our platform infrastructure.
+  requirements: 5+ years experience with cloud platforms and Kubernetes.
+  status: 1  # published
+  published_at: <%= 1.day.ago %>
+  unpublished_at: null
+  closed_at: null
+  created_at: <%= 2.days.ago %>
+  updated_at: <%= 1.day.ago %>
+
+# EDGE CASE: Old Published Posting (60+ days)
+# PURPOSE: Test days_since_published for older postings
+# USAGE: Test "Posted 60 days ago" display, test stale job filtering
+old_posting:
+  brand: acme
+  position_template: software_engineer
+  location: acme_remote
+  hiring_process: default_process
+  job_title: Backend Engineer - Legacy Systems
+  description: Maintain and modernize legacy backend systems.
+  requirements: 5+ years Ruby on Rails, experience with legacy code.
+  status: 1  # published
+  published_at: <%= 75.days.ago %>
+  unpublished_at: null
+  closed_at: null
+  created_at: <%= 80.days.ago %>
+  updated_at: <%= 75.days.ago %>

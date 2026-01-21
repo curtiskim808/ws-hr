@@ -1,0 +1,91 @@
+# Hiring Process Fixtures - T073
+#
+# FIXTURES PHILOSOPHY:
+# - Fixtures represent realistic, stable test data
+# - They're shared across all tests, reducing duplication
+# - Named semantically to make tests readable
+# - Use ERB for dynamic values like timestamps
+#
+# MULTI-TENANT DESIGN:
+# - All hiring processes belong to brand :acme (from brands.yml)
+# - Tests verify brand scoping works correctly
+# - Cross-brand access tests use brand :globex
+#
+# FIXTURE NAMING:
+# - Use descriptive names that indicate the process's purpose
+# - Examples: default_process, executive_process, internship_process
+# - Makes test code self-documenting: hiring_processes(:default_process)
+
+# DEFAULT HIRING PROCESS: Standard Hiring
+# PURPOSE: Default process used by most job postings
+# USAGE: Used when creating job postings without specifying a process
+# STAGES: Application Review → Phone Screen → Technical Interview → Final Decision
+default_process:
+  brand: acme
+  name: Standard Hiring Process
+  description: >
+    Our standard hiring workflow for most technical and non-technical roles.
+    Includes application review, phone screen, technical interview, and final decision.
+  is_default: true
+  active: true
+  created_at: <%= 60.days.ago %>
+  updated_at: <%= 10.days.ago %>
+
+# ALTERNATIVE HIRING PROCESS: Executive Hiring
+# PURPOSE: Process for senior leadership and executive roles
+# USAGE: Used for C-level and VP positions
+# STAGES: Application Review → Executive Interview → Board Interview → Final Decision
+executive_process:
+  brand: acme
+  name: Executive Hiring Process
+  description: >
+    Hiring process for senior leadership positions requiring board approval.
+    Includes executive interviews and board presentation.
+  is_default: false
+  active: true
+  created_at: <%= 45.days.ago %>
+  updated_at: <%= 5.days.ago %>
+
+# ALTERNATIVE HIRING PROCESS: Internship Hiring
+# PURPOSE: Simplified process for internship positions
+# USAGE: Used for summer interns and co-op students
+# STAGES: Application Review → Group Interview → Final Decision
+internship_process:
+  brand: acme
+  name: Internship Hiring Process
+  description: >
+    Streamlined process for internship positions.
+    Focuses on group interviews and quick decisions.
+  is_default: false
+  active: true
+  created_at: <%= 30.days.ago %>
+  updated_at: <%= 3.days.ago %>
+
+# INACTIVE HIRING PROCESS: Legacy Process
+# PURPOSE: Test inactive processes (archived but still referenced)
+# USAGE: Test filtering by active status, ensure old applications still work
+legacy_process:
+  brand: acme
+  name: Legacy Hiring Process
+  description: >
+    Old hiring process no longer in use.
+    Kept for historical applications.
+  is_default: false
+  active: false
+  created_at: <%= 180.days.ago %>
+  updated_at: <%= 90.days.ago %>
+
+# DIFFERENT BRAND: Globex Default Process
+# PURPOSE: Test multi-tenant brand scoping
+# USAGE: Verify users from :acme cannot see this process (belongs to :globex)
+# SECURITY: Critical for testing data isolation between brands
+globex_default_process:
+  brand: globex
+  name: Globex Standard Hiring
+  description: >
+    Globex Corporation's default hiring process.
+    Should not be visible to Acme users.
+  is_default: true
+  active: true
+  created_at: <%= 50.days.ago %>
+  updated_at: <%= 8.days.ago %>

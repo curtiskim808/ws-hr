@@ -71,6 +71,14 @@ class JobPosting < ApplicationRecord
   has_many :applications, dependent: :restrict_with_error
 
   # =============================================================================
+  # ENUM: Status
+  # =============================================================================
+  # PURPOSE: Define status enum values for AASM
+  # WHY: AASM with enum: true requires explicit enum definition in Rails 8
+  # VALUES: draft (0), published (1), link_only (2), unpublished (3)
+  enum :status, { draft: 0, published: 1, link_only: 2, unpublished: 3 }, prefix: false
+
+  # =============================================================================
   # T062: AASM STATE MACHINE
   # =============================================================================
   # PURPOSE: Manage job posting lifecycle with state transitions
@@ -316,7 +324,8 @@ class JobPosting < ApplicationRecord
   def set_default_hiring_process
     return if hiring_process.present?
 
-    self.hiring_process = HiringProcess.default || HiringProcess.active.first
+    self.hiring_process = HiringProcess.where(brand_id: brand_id).default ||
+                          HiringProcess.where(brand_id: brand_id).active.first
   end
 
   # PRIVATE METHOD: copy_from_template
