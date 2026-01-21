@@ -41,15 +41,17 @@ module WsHrApp
     # Skip views, helpers and assets when generating a new resource.
     config.api_only = true
 
+    # Enable sessions for test environment (required for devise-jwt sign_in)
+    # NOTE: API-only apps disable sessions by default, but devise-jwt needs sessions
+    # to generate tokens via sign_in helper in tests
+    # This is configured here so middleware is set up before Rails initializes
+
     # ActiveJob configuration for Solid Queue
     config.active_job.queue_adapter = :solid_queue
 
     # Time zone configuration
     config.time_zone = "UTC"
     config.active_record.default_timezone = :utc
-
-    # API versioning - set default namespace
-    config.paths.add "app/controllers/api/v1", eager_load: true
 
     # CORS configuration (uncomment and configure as needed)
     # config.middleware.insert_before 0, Rack::Cors do

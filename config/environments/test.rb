@@ -47,4 +47,10 @@ Rails.application.configure do
 
   # Raise error when a before_action's only/except options reference missing actions.
   config.action_controller.raise_on_missing_callback_actions = true
+
+  # Enable sessions for test environment (required for devise-jwt sign_in)
+  # NOTE: API-only apps disable sessions by default, but devise-jwt needs sessions
+  # to generate tokens via sign_in helper in tests
+  config.middleware.use ActionDispatch::Cookies
+  config.middleware.use ActionDispatch::Session::CookieStore, key: '_ws_hr_app_session'
 end

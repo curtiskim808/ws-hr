@@ -14,8 +14,11 @@ module Api
     class PositionTemplatesController < BaseController
       # CALLBACKS
       # T040: Set the template and authorize access before actions
+      # NOTE: index and show allow any authenticated user
+      # Only create, update, destroy require admin or hiring_manager role
+      before_action :authorize_manage_templates!, only: [:create, :update, :destroy]
       before_action :set_position_template, only: [:show, :update, :destroy]
-      before_action :authorize_manage_templates!
+      
 
       # INDEX - List all position templates
       # GET /api/v1/position_templates
@@ -88,9 +91,20 @@ module Api
 
       # AUTHORIZATION: Only admins and hiring managers can manage templates
       # SECURITY: Interviewers cannot create/edit templates
+      # NOTE: This runs after authenticate_api_user!, so current_user should always exist
+      # If current_user is nil here, it means authentication failed (shouldn't happen)
       def authorize_manage_templates!
+        # If no user is authenticated, return 401 (authentication failed)
+        # This should not normally happen since authenticate_api_user! should halt first
+        unless current_user
+          render json: { error: "Unauthorized" }, status: :unauthorized
+          return false
+        end
+
+        # If user is authenticated but doesn't have required role, return 403 (forbidden)
         unless current_user.role_admin? || current_user.role_hiring_manager?
           render json: { error: "Unauthorized" }, status: :forbidden
+          return false
         end
       end
 

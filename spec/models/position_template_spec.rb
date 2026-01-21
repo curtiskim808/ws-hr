@@ -256,8 +256,11 @@ RSpec.describe PositionTemplate, type: :model do
   describe 'deletion prevention' do
     # TEST: Template with job_postings cannot be deleted
     # EXPECTATION: destroy! raises error, template remains in database
+    # NOTE: These tests require JobPosting model (implemented in T051-T078)
     context 'when template has associated job_postings' do
       it 'prevents deletion and raises an error' do
+        pending 'JobPosting model not yet implemented (T051-T078)'
+
         # Setup: Create a template with a job_posting
         template = position_templates(:software_engineer)
 

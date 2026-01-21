@@ -1,0 +1,43 @@
+# Location Fixtures - Office locations for brands
+#
+# PURPOSE: Provide location records for job postings and user assignments
+# USAGE: Job postings reference locations, users can be assigned to locations
+
+# ACME HEADQUARTERS: San Francisco office
+acme_hq:
+  brand: acme
+  name: San Francisco HQ
+  address: 123 Market Street
+  city: San Francisco
+  state: CA
+  postal_code: '94102'
+  country: US
+  timezone: America/Los_Angeles
+  created_at: <%= 60.days.ago %>
+  updated_at: <%= 30.days.ago %>
+
+# ACME REMOTE: Virtual location for remote positions
+acme_remote:
+  brand: acme
+  name: Remote - US
+  address: null
+  city: null
+  state: null
+  postal_code: null
+  country: US
+  timezone: America/New_York
+  created_at: <%= 45.days.ago %>
+  updated_at: <%= 20.days.ago %>
+
+# GLOBEX HEADQUARTERS: Different brand location
+globex_hq:
+  brand: globex
+  name: New York Office
+  address: 456 Fifth Avenue
+  city: New York
+  state: NY
+  postal_code: '10001'
+  country: US
+  timezone: America/New_York
+  created_at: <%= 50.days.ago %>
+  updated_at: <%= 25.days.ago %>
