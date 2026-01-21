@@ -1,0 +1,89 @@
+# User Fixtures - Authentication & Authorization Test Data
+#
+# PURPOSE: Provide users with different roles for testing RBAC
+# USAGE: Request specs need authenticated users with specific roles
+#
+# ROLE HIERARCHY:
+# - super_admin (0): Full system access, all brands
+# - admin (1): Full brand access
+# - hiring_manager (2): Can manage templates, postings, applications
+# - interviewer (3): Read-only, can conduct interviews
+#
+# MULTI-TENANT DESIGN:
+# - acme_admin, acme_hiring_manager, acme_interviewer belong to :acme brand
+# - globex_admin belongs to :globex brand (for cross-brand testing)
+#
+# PASSWORD NOTES:
+# - All fixtures use 'password123' as the password
+# - encrypted_password is BCrypt hash of 'password123'
+# - Used BCrypt::Password.create('password123', cost: 4) for test speed
+
+# SUPER ADMIN: System-wide administrator
+# PURPOSE: Test unrestricted access across all brands
+# USAGE: Not brand-specific, can access all data
+super_admin:
+  brand: acme  # Super admins still need a home brand
+  email: super@example.com
+  encrypted_password: <%= BCrypt::Password.create('password123', cost: 4) %>
+  role: 0  # super_admin
+  first_name: Super
+  last_name: Admin
+  phone: '+1-555-0001'
+  created_at: <%= 60.days.ago %>
+  updated_at: <%= 30.days.ago %>
+
+# ACME BRAND ADMIN: Full access to Acme brand data
+# PURPOSE: Test admin capabilities within a brand
+# USAGE: Can manage all templates, postings, applications for Acme
+acme_admin:
+  brand: acme
+  email: admin@acme.example.com
+  encrypted_password: <%= BCrypt::Password.create('password123', cost: 4) %>
+  role: 1  # admin
+  first_name: Alice
+  last_name: Admin
+  phone: '+1-555-0002'
+  created_at: <%= 45.days.ago %>
+  updated_at: <%= 20.days.ago %>
+
+# ACME BRAND HIRING MANAGER: Can manage hiring process
+# PURPOSE: Test hiring manager capabilities (can manage templates)
+# USAGE: Authorized to create/edit position templates and job postings
+acme_hiring_manager:
+  brand: acme
+  email: hiring@acme.example.com
+  encrypted_password: <%= BCrypt::Password.create('password123', cost: 4) %>
+  role: 2  # hiring_manager
+  first_name: Henry
+  last_name: Manager
+  phone: '+1-555-0003'
+  created_at: <%= 30.days.ago %>
+  updated_at: <%= 10.days.ago %>
+
+# ACME BRAND INTERVIEWER: Limited access
+# PURPOSE: Test interviewer restrictions (cannot manage templates)
+# USAGE: Should be denied when trying to create/edit position templates
+acme_interviewer:
+  brand: acme
+  email: interviewer@acme.example.com
+  encrypted_password: <%= BCrypt::Password.create('password123', cost: 4) %>
+  role: 3  # interviewer
+  first_name: Ian
+  last_name: Interviewer
+  phone: '+1-555-0004'
+  created_at: <%= 25.days.ago %>
+  updated_at: <%= 5.days.ago %>
+
+# GLOBEX BRAND ADMIN: Admin for different brand
+# PURPOSE: Test multi-tenant data isolation
+# USAGE: Should only see Globex templates, not Acme templates
+globex_admin:
+  brand: globex
+  email: admin@globex.example.com
+  encrypted_password: <%= BCrypt::Password.create('password123', cost: 4) %>
+  role: 1  # admin
+  first_name: Greg
+  last_name: Globex
+  phone: '+1-555-0005'
+  created_at: <%= 40.days.ago %>
+  updated_at: <%= 15.days.ago %>

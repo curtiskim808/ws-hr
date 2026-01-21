@@ -1,0 +1,27 @@
+# Brand Fixtures - Multi-tenant Test Data
+#
+# PURPOSE: Provide brand records for multi-tenant testing
+# USAGE: All tenant-scoped models (position_templates, job_postings, etc.) reference these brands
+#
+# MULTI-TENANT TESTING STRATEGY:
+# - :acme is the primary brand for most tests
+# - :globex is used to test cross-brand data isolation
+# - Tests verify users from one brand cannot access another brand's data
+
+# PRIMARY BRAND: Acme Corporation
+# PURPOSE: Default brand for most test scenarios
+# USAGE: Assigned to primary test users and resources
+acme:
+  name: Acme Corporation
+  slug: acme
+  created_at: <%= 60.days.ago %>
+  updated_at: <%= 30.days.ago %>
+
+# SECONDARY BRAND: Globex Corporation
+# PURPOSE: Test multi-tenant data isolation
+# USAGE: Verify brand scoping prevents cross-brand data access
+globex:
+  name: Globex Corporation
+  slug: globex
+  created_at: <%= 45.days.ago %>
+  updated_at: <%= 20.days.ago %>

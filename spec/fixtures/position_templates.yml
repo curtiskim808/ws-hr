@@ -1,0 +1,157 @@
+# Position Template Fixtures - DHH/37signals Style
+#
+# FIXTURES PHILOSOPHY:
+# - Fixtures represent realistic, stable test data
+# - They're shared across all tests, reducing duplication
+# - Named semantically to make tests readable
+# - Use ERB for dynamic values like timestamps
+#
+# MULTI-TENANT DESIGN:
+# - All templates belong to brand :acme (from brands.yml)
+# - Tests verify brand scoping works correctly
+# - Cross-brand access tests use brand :globex
+#
+# FIXTURE NAMING:
+# - Use descriptive names that indicate the template's purpose
+# - Examples: software_engineer, sales_rep, customer_support
+# - Makes test code self-documenting: position_templates(:software_engineer)
+
+# ACTIVE TEMPLATE: Software Engineer
+# PURPOSE: Test the most common scenario - active engineering role
+# USAGE: Default template for most positive test cases
+software_engineer:
+  brand: acme
+  name: Software Engineer Template
+  job_title: Senior Software Engineer - Backend
+  category: Engineering
+  department: Product Development
+  description: >
+    We're looking for an experienced backend engineer to join our product team.
+    You'll work on building scalable APIs and services using Ruby on Rails.
+  requirements: >
+    - 5+ years of Ruby on Rails experience
+    - Strong understanding of RESTful API design
+    - Experience with PostgreSQL and Redis
+    - Excellent problem-solving skills
+    - Strong communication skills
+  location_type: hybrid
+  employment_type: full_time
+  education_requirement: bachelor
+  status: 1  # active (enum value)
+  created_at: <%= 30.days.ago %>
+  updated_at: <%= 5.days.ago %>
+
+# ACTIVE TEMPLATE: Sales Representative
+# PURPOSE: Test different category/department combination
+# USAGE: Test filtering by category, validate cross-department functionality
+sales_rep:
+  brand: acme
+  name: Sales Rep Template
+  job_title: Account Executive - Mid-Market
+  category: Sales
+  department: Revenue
+  description: >
+    Join our high-performing sales team to drive revenue growth in the mid-market segment.
+    You'll manage the full sales cycle from prospecting to close.
+  requirements: >
+    - 3+ years of B2B sales experience
+    - Proven track record of meeting/exceeding quota
+    - Experience with CRM systems (Salesforce preferred)
+    - Excellent presentation and negotiation skills
+  location_type: remote
+  employment_type: full_time
+  education_requirement: associate
+  status: 1  # active
+  created_at: <%= 20.days.ago %>
+  updated_at: <%= 2.days.ago %>
+
+# ACTIVE TEMPLATE: Customer Support
+# PURPOSE: Test another category, different location/employment types
+# USAGE: Test scope filtering, test part-time employment type
+customer_support:
+  brand: acme
+  name: Customer Support Template
+  job_title: Customer Support Specialist
+  category: Support
+  department: Customer Success
+  description: >
+    Provide exceptional customer support via email, chat, and phone.
+    Help customers solve problems and ensure they have a great experience.
+  requirements: >
+    - 1+ years of customer service experience
+    - Excellent written and verbal communication
+    - Patient, empathetic, and solution-oriented
+    - Comfortable with help desk software
+  location_type: onsite
+  employment_type: part_time
+  education_requirement: high_school
+  status: 1  # active
+  created_at: <%= 10.days.ago %>
+  updated_at: <%= 1.day.ago %>
+
+# DRAFT TEMPLATE: Marketing Manager
+# PURPOSE: Test draft status functionality
+# USAGE: Test status filtering (active vs draft), test status transitions
+marketing_manager_draft:
+  brand: acme
+  name: Marketing Manager Template
+  job_title: Senior Marketing Manager - Product Marketing
+  category: Marketing
+  department: Marketing
+  description: >
+    Lead product marketing initiatives for our SaaS platform.
+    Develop go-to-market strategies and drive demand generation.
+  requirements: >
+    - 5+ years of product marketing experience
+    - B2B SaaS experience required
+    - Strong analytical and strategic thinking skills
+    - Experience with marketing automation tools
+  location_type: hybrid
+  employment_type: full_time
+  education_requirement: bachelor
+  status: 0  # draft (enum value)
+  created_at: <%= 5.days.ago %>
+  updated_at: <%= 1.day.ago %>
+
+# TEMPLATE FROM DIFFERENT BRAND: Finance Analyst
+# PURPOSE: Test multi-tenant brand scoping
+# USAGE: Verify users from :acme cannot see this template (belongs to :globex)
+# SECURITY: Critical for testing data isolation between brands
+finance_analyst_globex:
+  brand: globex
+  name: Finance Analyst Template
+  job_title: Senior Finance Analyst
+  category: Finance
+  department: Finance & Accounting
+  description: >
+    Analyze financial data and provide insights to support business decisions.
+    Prepare financial reports and forecasts.
+  requirements: >
+    - 3+ years of financial analysis experience
+    - Advanced Excel skills
+    - Experience with financial modeling
+    - CPA or CFA preferred
+  location_type: onsite
+  employment_type: full_time
+  education_requirement: bachelor
+  status: 1  # active
+  created_at: <%= 15.days.ago %>
+  updated_at: <%= 3.days.ago %>
+
+# MINIMAL TEMPLATE: Test Required Fields Only
+# PURPOSE: Test validation - only required fields populated
+# USAGE: Test that optional fields (requirements, education_requirement) are truly optional
+minimal_template:
+  brand: acme
+  name: Minimal Template
+  job_title: Entry Level Position
+  category: General
+  department: Operations
+  description: Basic job description
+  requirements: null  # Optional field
+  location_type: remote
+  employment_type: full_time
+  education_requirement: null  # Optional field
+  status: 0  # draft
+  created_at: <%= 2.days.ago %>
+  updated_at: <%= 2.days.ago %>

@@ -51,18 +51,26 @@ Rails.application.routes.draw do
         delete 'logout', to: 'auth#logout'
       end
 
+      # RESOURCE ROUTES
+      # T043: Position Templates (US1)
+      # ENDPOINTS:
+      # GET    /api/v1/position_templates      - List all templates
+      # GET    /api/v1/position_templates/:id  - Get single template
+      # POST   /api/v1/position_templates      - Create template
+      # PATCH  /api/v1/position_templates/:id  - Update template
+      # DELETE /api/v1/position_templates/:id  - Delete template
+      #
+      # AUTHENTICATION: Required (via BaseController)
+      # AUTHORIZATION: Admin or Hiring Manager only
+      # BRAND SCOPING: Automatic (via BrandScoped concern)
+      resources :position_templates
+
       # FUTURE RESOURCE ROUTES
-      # EXPLANATION: Additional API resources will be added here
-      # EXAMPLES (from tasks.md):
-      # - resources :position_templates    # US1: Position Templates
       # - resources :job_postings          # US2: Job Postings
       # - resources :applications          # US3: Applications
       # - resources :applicants            # US3: Applicants
       # - resources :availability_slots    # US6: Availability
       # - resources :interviews            # US7: Interviews
-      #
-      # PATTERN: All resources inherit from Api::V1::BaseController
-      # RESULT: Automatic authentication, brand scoping, error handling
     end
   end
 end
