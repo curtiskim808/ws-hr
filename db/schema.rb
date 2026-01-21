@@ -10,9 +10,73 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_01_21_031240) do
+ActiveRecord::Schema[8.0].define(version: 2026_01_21_063523) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
+
+  create_table "applicants", force: :cascade do |t|
+    t.bigint "brand_id", null: false
+    t.string "first_name", null: false
+    t.string "last_name", null: false
+    t.string "email", null: false
+    t.string "phone"
+    t.string "preferred_language", default: "en"
+    t.string "source"
+    t.boolean "flagged", default: false
+    t.text "flag_reason"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["brand_id", "created_at"], name: "index_applicants_on_brand_and_created_at"
+    t.index ["brand_id", "email"], name: "index_applicants_on_brand_and_email", unique: true
+    t.index ["brand_id"], name: "index_applicants_on_brand_id"
+  end
+
+  create_table "application_stage_transitions", force: :cascade do |t|
+    t.bigint "application_id", null: false
+    t.bigint "from_stage_id"
+    t.bigint "to_stage_id", null: false
+    t.bigint "transitioned_by_id"
+    t.datetime "transitioned_at", null: false
+    t.text "notes"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["application_id", "transitioned_at"], name: "index_app_stage_transitions_on_app_and_time"
+    t.index ["application_id"], name: "index_application_stage_transitions_on_application_id"
+    t.index ["from_stage_id"], name: "index_application_stage_transitions_on_from_stage_id"
+    t.index ["to_stage_id"], name: "index_application_stage_transitions_on_to_stage_id"
+    t.index ["transitioned_by_id"], name: "index_application_stage_transitions_on_transitioned_by_id"
+  end
+
+  create_table "applications", force: :cascade do |t|
+    t.bigint "brand_id", null: false
+    t.bigint "applicant_id", null: false
+    t.bigint "job_posting_id", null: false
+    t.bigint "hiring_process_id", null: false
+    t.bigint "current_stage_id"
+    t.integer "status", default: 0, null: false
+    t.datetime "applied_at", null: false
+    t.datetime "hired_at"
+    t.bigint "hired_by_id"
+    t.datetime "rejected_at"
+    t.bigint "rejected_by_id"
+    t.text "rejection_reason"
+    t.datetime "archived_at"
+    t.text "notes"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["applicant_id", "job_posting_id"], name: "index_applications_on_applicant_and_job_posting", unique: true
+    t.index ["applicant_id"], name: "index_applications_on_applicant_id"
+    t.index ["brand_id", "applicant_id"], name: "index_applications_on_brand_and_applicant"
+    t.index ["brand_id", "created_at"], name: "index_applications_on_brand_and_created_at"
+    t.index ["brand_id", "job_posting_id"], name: "index_applications_on_brand_and_job_posting"
+    t.index ["brand_id", "status"], name: "index_applications_on_brand_and_status"
+    t.index ["brand_id"], name: "index_applications_on_brand_id"
+    t.index ["current_stage_id"], name: "index_applications_on_current_stage_id"
+    t.index ["hired_by_id"], name: "index_applications_on_hired_by_id"
+    t.index ["hiring_process_id"], name: "index_applications_on_hiring_process_id"
+    t.index ["job_posting_id"], name: "index_applications_on_job_posting_id"
+    t.index ["rejected_by_id"], name: "index_applications_on_rejected_by_id"
+  end
 
   create_table "brands", force: :cascade do |t|
     t.string "name", null: false
@@ -48,6 +112,29 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_21_031240) do
     t.datetime "updated_at", null: false
     t.index ["hiring_process_id", "position"], name: "index_hiring_stages_on_process_and_position", unique: true
     t.index ["hiring_process_id"], name: "index_hiring_stages_on_hiring_process_id"
+  end
+
+  create_table "job_postings", force: :cascade do |t|
+    t.bigint "brand_id", null: false
+    t.bigint "position_template_id", null: false
+    t.bigint "location_id", null: false
+    t.bigint "hiring_process_id", null: false
+    t.string "job_title", null: false
+    t.text "description"
+    t.text "requirements"
+    t.integer "status", default: 0, null: false
+    t.datetime "published_at"
+    t.datetime "unpublished_at"
+    t.datetime "closed_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["brand_id", "location_id"], name: "index_job_postings_on_brand_and_location"
+    t.index ["brand_id", "published_at"], name: "index_job_postings_on_brand_and_published_at"
+    t.index ["brand_id", "status"], name: "index_job_postings_on_brand_and_status"
+    t.index ["brand_id"], name: "index_job_postings_on_brand_id"
+    t.index ["hiring_process_id"], name: "index_job_postings_on_hiring_process_id"
+    t.index ["location_id"], name: "index_job_postings_on_location_id"
+    t.index ["position_template_id"], name: "index_job_postings_on_position_template_id"
   end
 
   create_table "jwt_denylists", force: :cascade do |t|
@@ -124,8 +211,24 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_21_031240) do
     t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
   end
 
+  add_foreign_key "applicants", "brands"
+  add_foreign_key "application_stage_transitions", "applications"
+  add_foreign_key "application_stage_transitions", "hiring_stages", column: "from_stage_id"
+  add_foreign_key "application_stage_transitions", "hiring_stages", column: "to_stage_id"
+  add_foreign_key "application_stage_transitions", "users", column: "transitioned_by_id"
+  add_foreign_key "applications", "applicants"
+  add_foreign_key "applications", "brands"
+  add_foreign_key "applications", "hiring_processes"
+  add_foreign_key "applications", "hiring_stages", column: "current_stage_id"
+  add_foreign_key "applications", "job_postings"
+  add_foreign_key "applications", "users", column: "hired_by_id"
+  add_foreign_key "applications", "users", column: "rejected_by_id"
   add_foreign_key "hiring_processes", "brands"
   add_foreign_key "hiring_stages", "hiring_processes"
+  add_foreign_key "job_postings", "brands"
+  add_foreign_key "job_postings", "hiring_processes"
+  add_foreign_key "job_postings", "locations"
+  add_foreign_key "job_postings", "position_templates"
   add_foreign_key "location_assignments", "locations"
   add_foreign_key "location_assignments", "users"
   add_foreign_key "locations", "brands"
