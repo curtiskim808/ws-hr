@@ -605,7 +605,8 @@ RSpec.describe 'Position Templates API', type: :request do
       let(:headers) { auth_headers(users(:acme_admin)) }
 
       it 'deletes the position template' do
-        template = position_templates(:minimal_template)
+        # Use no_associated_job_postings_template which has no job postings associated
+        template = position_templates(:no_associated_job_postings_template)
 
         expect {
           delete "/api/v1/position_templates/#{template.id}", headers: headers

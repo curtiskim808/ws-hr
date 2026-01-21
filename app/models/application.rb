@@ -1,4 +1,4 @@
-# Application Model - T089-T096
+# Application Model - T089-T096, T123-T127
 #
 # PURPOSE: Represent a job application (applicant applying to a job posting)
 # WHY: Track application lifecycle from submission to hire/reject decision
@@ -12,6 +12,12 @@
 #   in_progress (default) → hire! → hired
 #                        → reject! → rejected
 #                        → archive! → archived
+#
+# NOTIFICATIONS (T123-T127):
+#   - after_commit :publish_received_notification (on create)
+#   - after_commit :publish_hired_notification (when status → hired)
+#   - after_commit :publish_rejected_notification (when status → rejected)
+#   - after_commit :publish_stage_changed_notification (when current_stage_id changes)
 #
 # EXAMPLE SCENARIOS:
 #   1. John Doe applies for "Backend Engineer" (status: in_progress)
@@ -507,44 +513,39 @@ class Application < ApplicationRecord
   end
 
   # =============================================================================
-  # T095: CALLBACKS
+  # T095, T123-T127: CALLBACKS - NOTIFICATIONS
   # =============================================================================
+  # CRITICAL: ALL notification callbacks use after_commit to ensure:
+  #   1. Transaction is complete before notification
+  #   2. Rollbacks don't trigger phantom notifications
+  #   3. Follows DHH/37signals pattern for side effects
 
-  # CALLBACK: broadcast_created
-  # PURPOSE: Broadcast application creation event
+  # CALLBACK: publish_received_notification (T123)
+  # PURPOSE: Publish notification when new application is received
   # TRIGGER: after_commit on create
-  # ACTION: Publish event to notification system (via Turbo Streams or ActionCable)
-  # USE CASE: Real-time updates to hiring manager dashboard
-  #
-  # IMPLEMENTATION:
-  #   - Broadcast to "applications" channel
-  #   - Send application data with applicant and job_posting
-  #   - Use after_commit to ensure transaction is complete
-  #
-  # FUTURE (T123): Add after_commit callback to publish SNS notification
-  after_commit :broadcast_created, on: :create
+  # ACTION: Enqueue NotificationJob with :application_received event
+  # USE CASE: Notify hiring manager about new applicant
+  after_commit :publish_received_notification, on: :create
 
-  # =============================================================================
-  # T104: STAGE CHANGE NOTIFICATION CALLBACK
-  # =============================================================================
+  # CALLBACK: publish_hired_notification (T124)
+  # PURPOSE: Publish notification when applicant is hired
+  # TRIGGER: after_commit when status changes to 'hired'
+  # ACTION: Enqueue NotificationJob with :candidate_hired event
+  # USE CASE: Send congratulations email to applicant
+  after_commit :publish_hired_notification, if: :saved_change_to_hired_status?
 
-  # CALLBACK: publish_stage_changed_notification
+  # CALLBACK: publish_rejected_notification (T125)
+  # PURPOSE: Publish notification when applicant is rejected
+  # TRIGGER: after_commit when status changes to 'rejected'
+  # ACTION: Enqueue NotificationJob with :candidate_rejected event
+  # USE CASE: Send polite rejection email to applicant
+  after_commit :publish_rejected_notification, if: :saved_change_to_rejected_status?
+
+  # CALLBACK: publish_stage_changed_notification (T126)
   # PURPOSE: Publish notification when application moves to a new stage
   # TRIGGER: after_commit when current_stage_id changes
-  # ACTION: Broadcast event to notification system
-  # USE CASE: Notify hiring team when candidate advances (e.g., "John moved to Interview stage")
-  #
-  # IMPLEMENTATION:
-  #   - Check if current_stage_id changed
-  #   - Broadcast to notification system
-  #   - Use after_commit to ensure transaction is complete
-  #
-  # WHY after_commit:
-  #   - Ensures stage transition record is saved before notification
-  #   - Prevents phantom notifications if transaction rolls back
-  #   - Follows DHH/37signals pattern
-  #
-  # FUTURE (T126): Add SNS notification publishing for stage changes
+  # ACTION: Enqueue NotificationJob with :stage_changed event
+  # USE CASE: Notify hiring team when candidate advances
   after_commit :publish_stage_changed_notification, if: :saved_change_to_current_stage_id?
 
   # =============================================================================
@@ -577,40 +578,78 @@ class Application < ApplicationRecord
     update_column(:archived_at, Time.current)
   end
 
-  # PRIVATE METHOD: broadcast_created
-  # PURPOSE: Broadcast application creation event
-  # TRIGGER: after_commit on create
-  # IMPLEMENTATION: Use Turbo Streams to broadcast to applications channel
-  # FUTURE: Add SNS notification publishing (T123)
-  def broadcast_created
-    # Broadcast to Turbo Streams (real-time updates)
-    # broadcast_append_to "applications", target: "applications_list"
+  # =============================================================================
+  # T127: PRIVATE METHODS - NOTIFICATION ENQUEUING
+  # =============================================================================
+  # T136: GRACEFUL ERROR HANDLING
+  # All notification callbacks log errors but don't raise exceptions
+  # WHY: Notification failures should never block business operations
 
-    # Future (T123): Publish to SNS for email notifications
-    # NotificationWorker.perform_async(:application_received, id)
+  # PRIVATE METHOD: publish_received_notification (T123)
+  # PURPOSE: Enqueue notification for new application
+  # IMPLEMENTATION: Enqueue NotificationJob with :application_received
+  # ERROR HANDLING: Log errors, don't raise (graceful degradation)
+  def publish_received_notification
+    Rails.logger.info "[Application] Publishing :application_received notification for ##{id}"
+    NotificationJob.perform_later(:application_received, id)
+  rescue StandardError => e
+    Rails.logger.error "[Application] Failed to enqueue :application_received notification: #{e.message}"
+    # Don't re-raise - notification failure should not affect application creation
   end
 
-  # PRIVATE METHOD: publish_stage_changed_notification (T104)
-  # PURPOSE: Publish notification when stage changes
-  # TRIGGER: after_commit when current_stage_id changes
-  # IMPLEMENTATION:
-  #   - Broadcast to Turbo Streams for real-time updates
-  #   - Log stage change for debugging
-  #   - Future: Publish to SNS for notifications
-  #
-  # EXAMPLE:
-  #   Application changes from "Phone Screen" → "Onsite Interview"
-  #   → Broadcast event to hiring_manager_dashboard
-  #   → Log: "Application #123 moved to Onsite Interview"
-  #   → Future: Send email to hiring manager
+  # PRIVATE METHOD: publish_hired_notification (T124)
+  # PURPOSE: Enqueue notification when applicant is hired
+  # IMPLEMENTATION: Enqueue NotificationJob with :candidate_hired
+  # ERROR HANDLING: Log errors, don't raise (graceful degradation)
+  def publish_hired_notification
+    Rails.logger.info "[Application] Publishing :candidate_hired notification for ##{id}"
+    NotificationJob.perform_later(:candidate_hired, id)
+  rescue StandardError => e
+    Rails.logger.error "[Application] Failed to enqueue :candidate_hired notification: #{e.message}"
+    # Don't re-raise - notification failure should not affect hiring
+  end
+
+  # PRIVATE METHOD: publish_rejected_notification (T125)
+  # PURPOSE: Enqueue notification when applicant is rejected
+  # IMPLEMENTATION: Enqueue NotificationJob with :candidate_rejected
+  # ERROR HANDLING: Log errors, don't raise (graceful degradation)
+  def publish_rejected_notification
+    Rails.logger.info "[Application] Publishing :candidate_rejected notification for ##{id}"
+    NotificationJob.perform_later(:candidate_rejected, id)
+  rescue StandardError => e
+    Rails.logger.error "[Application] Failed to enqueue :candidate_rejected notification: #{e.message}"
+    # Don't re-raise - notification failure should not affect rejection
+  end
+
+  # PRIVATE METHOD: publish_stage_changed_notification (T126)
+  # PURPOSE: Enqueue notification when application moves to new stage
+  # IMPLEMENTATION: Enqueue NotificationJob with :stage_changed
+  # ERROR HANDLING: Log errors, don't raise (graceful degradation)
   def publish_stage_changed_notification
-    # Broadcast to Turbo Streams (real-time updates)
-    # broadcast_update_to "applications", target: "application_#{id}"
+    Rails.logger.info "[Application] Publishing :stage_changed notification for ##{id} to stage: #{current_stage&.name}"
+    NotificationJob.perform_later(:stage_changed, id)
+  rescue StandardError => e
+    Rails.logger.error "[Application] Failed to enqueue :stage_changed notification: #{e.message}"
+    # Don't re-raise - notification failure should not affect stage change
+  end
 
-    # Log for debugging
-    Rails.logger.info "Application ##{id} moved to stage: #{current_stage&.name}"
+  # =============================================================================
+  # PRIVATE HELPER METHODS - STATUS CHANGE DETECTION
+  # =============================================================================
 
-    # Future (T126): Publish to SNS for stage change notifications
-    # NotificationWorker.perform_async(:stage_changed, id)
+  # PRIVATE METHOD: saved_change_to_hired_status?
+  # PURPOSE: Detect if status just changed to 'hired'
+  # RETURNS: Boolean true if previous_changes includes status → 'hired'
+  # USE CASE: Conditional for publish_hired_notification callback
+  def saved_change_to_hired_status?
+    saved_change_to_status? && status == 'hired'
+  end
+
+  # PRIVATE METHOD: saved_change_to_rejected_status?
+  # PURPOSE: Detect if status just changed to 'rejected'
+  # RETURNS: Boolean true if previous_changes includes status → 'rejected'
+  # USE CASE: Conditional for publish_rejected_notification callback
+  def saved_change_to_rejected_status?
+    saved_change_to_status? && status == 'rejected'
   end
 end

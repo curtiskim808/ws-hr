@@ -56,4 +56,9 @@ Rails.application.configure do
 
   # Active Storage configuration
   config.active_storage.service = :test
+
+  # Active Job configuration for tests
+  # Use :test adapter to queue jobs in-memory (they won't actually run unless explicitly performed)
+  # This prevents database transaction issues with after_commit callbacks
+  config.active_job.queue_adapter = :test
 end
