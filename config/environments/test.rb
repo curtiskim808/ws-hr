@@ -53,4 +53,7 @@ Rails.application.configure do
   # to generate tokens via sign_in helper in tests
   config.middleware.use ActionDispatch::Cookies
   config.middleware.use ActionDispatch::Session::CookieStore, key: '_ws_hr_app_session'
+
+  # Active Storage configuration
+  config.active_storage.service = :test
 end

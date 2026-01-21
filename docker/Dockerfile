@@ -19,14 +19,21 @@ RUN apt-get update -qq && \
     apt-get install --no-install-recommends -y curl libjemalloc2 postgresql-client && \
     rm -rf /var/lib/apt/lists /var/cache/apt/archives
 
-# Set production environment
-ENV RAILS_ENV="production" \
+# Set build arguments for environment configuration
+ARG RAILS_ENV=production
+ARG BUNDLE_WITHOUT=development
+
+# Set environment variables
+ENV RAILS_ENV="${RAILS_ENV}" \
     BUNDLE_DEPLOYMENT="1" \
-    BUNDLE_PATH="/usr/local/bundle" \
-    BUNDLE_WITHOUT="development"
+    BUNDLE_PATH="/usr/local/bundle"
 
 # Throw-away build stage to reduce size of final image
 FROM base AS build
+
+# Redeclare ARGs for this build stage
+ARG RAILS_ENV=production
+ARG BUNDLE_WITHOUT=development
 
 # Install packages needed to build gems
 RUN apt-get update -qq && \
@@ -35,7 +42,13 @@ RUN apt-get update -qq && \
 
 # Install application gems
 COPY Gemfile Gemfile.lock ./
-RUN bundle install && \
+# Conditionally set BUNDLE_WITHOUT based on RAILS_ENV
+# For development, install all gems; for production, exclude development/test
+RUN if [ "$RAILS_ENV" = "development" ]; then \
+      bundle install; \
+    else \
+      BUNDLE_WITHOUT="${BUNDLE_WITHOUT}" bundle install; \
+    fi && \
     rm -rf ~/.bundle/ "${BUNDLE_PATH}"/ruby/*/cache "${BUNDLE_PATH}"/ruby/*/bundler/gems/*/.git && \
     bundle exec bootsnap precompile --gemfile
 
@@ -51,6 +64,16 @@ RUN bundle exec bootsnap precompile app/ lib/
 # Final stage for app image
 FROM base
 
+# Redeclare ARG for runtime stage
+ARG RAILS_ENV=production
+
+# For development, install build tools needed for gem compilation
+RUN if [ "$RAILS_ENV" = "development" ]; then \
+      apt-get update -qq && \
+      apt-get install --no-install-recommends -y build-essential git libpq-dev libyaml-dev pkg-config && \
+      rm -rf /var/lib/apt/lists /var/cache/apt/archives; \
+    fi
+
 # Copy built artifacts: gems, application
 COPY --from=build "${BUNDLE_PATH}" "${BUNDLE_PATH}"
 COPY --from=build /rails /rails
@@ -58,7 +81,9 @@ COPY --from=build /rails /rails
 # Run and own only the runtime files as a non-root user for security
 RUN groupadd --system --gid 1000 rails && \
     useradd rails --uid 1000 --gid 1000 --create-home --shell /bin/bash && \
-    chown -R rails:rails db log tmp
+    chown -R rails:rails db log tmp && \
+    # Fix permissions for bundle cache volume (for development)
+    mkdir -p "${BUNDLE_PATH}" && chown -R rails:rails "${BUNDLE_PATH}"
 USER 1000:1000
 
 # Entrypoint prepares the database.

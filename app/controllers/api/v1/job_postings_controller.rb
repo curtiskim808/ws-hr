@@ -85,7 +85,8 @@ module Api
       #   - status: "link_only" → calls make_link_only!
       def update
         # T070: Handle status transitions via AASM events
-        handle_status_transition if params[:job_posting][:status].present?
+        # Return early if transition fails (handle_status_transition renders error response)
+        return if params[:job_posting][:status].present? && handle_status_transition == false
 
         # Update other attributes
         @job_posting.update!(job_posting_params.except(:status))
@@ -172,10 +173,12 @@ module Api
         when 'link_only'
           @job_posting.make_link_only! unless @job_posting.link_only?
         end
+        true # Return true to indicate success
       rescue AASM::InvalidTransition => e
         # If transition is invalid, AASM will raise error
         # Return 422 with error message
         render json: { error: e.message }, status: :unprocessable_entity
+        false # Return false to indicate failure (prevents double render)
       end
     end
   end

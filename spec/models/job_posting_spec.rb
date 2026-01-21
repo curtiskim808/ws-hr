@@ -580,7 +580,7 @@ RSpec.describe JobPosting, type: :model do
         position_template: position_templates(:software_engineer),
         location: locations(:acme_hq)
       )
-      binding.pry
+
       expect(posting.hiring_process).to eq(hiring_processes(:default_process))
       expect(posting.hiring_process.is_default).to be true
     end

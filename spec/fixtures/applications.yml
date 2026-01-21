@@ -1,0 +1,344 @@
+# Application Fixtures - T112
+#
+# FIXTURES PHILOSOPHY:
+# - Fixtures represent realistic, stable test data
+# - They're shared across all tests, reducing duplication
+# - Named semantically to make tests readable
+# - Use ERB for dynamic values like timestamps
+#
+# MULTI-TENANT DESIGN:
+# - All applications belong to brand :acme (from brands.yml)
+# - Tests verify brand scoping works correctly
+# - Cross-brand access tests use brand :globex
+#
+# FIXTURE NAMING:
+# - Use descriptive names that indicate the application's status and role
+# - Examples: pending_application, hired_application, rejected_application
+# - Makes test code self-documenting: applications(:pending_application)
+#
+# STATUS VALUES (AASM enum):
+# - in_progress (0): Application being reviewed/processed
+# - hired (1): Applicant was hired
+# - rejected (2): Applicant was rejected
+# - archived (3): Application archived (no longer active)
+#
+# RELATIONSHIPS:
+# - Each application belongs to: brand, applicant, job_posting, hiring_process
+# - current_stage: Current position in hiring process
+# - hired_by/rejected_by: User who made the decision
+
+# =============================================================================
+# IN PROGRESS APPLICATIONS (Active, being reviewed)
+# =============================================================================
+
+# APPLICATION: Pending (In Progress)
+# PURPOSE: Primary test case for active applications
+# USAGE: Test stage transitions, hire!, reject! methods
+# STATUS: in_progress (0)
+# STAGE: Application Review (position 1)
+pending_application:
+  brand: acme
+  applicant: john_doe
+  job_posting: backend_engineer_published
+  hiring_process: default_process
+  current_stage: default_application
+  status: 0  # in_progress
+  applied_at: <%= 7.days.ago %>
+  hired_at: null
+  hired_by: null
+  rejected_at: null
+  rejected_by: null
+  rejection_reason: null
+  archived_at: null
+  notes: "Strong resume, good technical background"
+  created_at: <%= 7.days.ago %>
+  updated_at: <%= 5.days.ago %>
+
+# APPLICATION: In Phone Screen Stage
+# PURPOSE: Test application at intermediate stage
+# USAGE: Test advance_to_stage!, stage transition history
+# STATUS: in_progress (0)
+# STAGE: Phone Screen (position 2)
+phone_screen_application:
+  brand: acme
+  applicant: jane_smith
+  job_posting: backend_engineer_published
+  hiring_process: default_process
+  current_stage: default_phone_screen
+  status: 0  # in_progress
+  applied_at: <%= 14.days.ago %>
+  hired_at: null
+  hired_by: null
+  rejected_at: null
+  rejected_by: null
+  rejection_reason: null
+  archived_at: null
+  notes: "Moved to phone screen after strong initial review"
+  created_at: <%= 14.days.ago %>
+  updated_at: <%= 7.days.ago %>
+
+# APPLICATION: In Technical Interview Stage
+# PURPOSE: Test application at advanced stage
+# USAGE: Test near-final stage, hire! transition
+# STATUS: in_progress (0)
+# STAGE: Technical Interview (position 3)
+technical_interview_application:
+  brand: acme
+  applicant: bob_wilson
+  job_posting: backend_engineer_published
+  hiring_process: default_process
+  current_stage: default_technical
+  status: 0  # in_progress
+  applied_at: <%= 21.days.ago %>
+  hired_at: null
+  hired_by: null
+  rejected_at: null
+  rejected_by: null
+  rejection_reason: null
+  archived_at: null
+  notes: "Excellent phone screen, strong technical skills"
+  created_at: <%= 21.days.ago %>
+  updated_at: <%= 3.days.ago %>
+
+# APPLICATION: For Sales Position
+# PURPOSE: Test application to different job posting
+# USAGE: Test filtering by job_posting_id
+# STATUS: in_progress (0)
+# POSTING: Sales Rep Published
+sales_application:
+  brand: acme
+  applicant: multiple_apps_applicant
+  job_posting: sales_rep_published
+  hiring_process: default_process
+  current_stage: default_application
+  status: 0  # in_progress
+  applied_at: <%= 10.days.ago %>
+  hired_at: null
+  hired_by: null
+  rejected_at: null
+  rejected_by: null
+  rejection_reason: null
+  archived_at: null
+  notes: "Referred by current sales team member"
+  created_at: <%= 10.days.ago %>
+  updated_at: <%= 8.days.ago %>
+
+# =============================================================================
+# HIRED APPLICATIONS (Completed successfully)
+# =============================================================================
+
+# APPLICATION: Hired
+# PURPOSE: Test hired status, hired_at/hired_by fields
+# USAGE: Test application lifecycle completion
+# STATUS: hired (1)
+# HIRED_BY: acme_hiring_manager
+hired_application:
+  brand: acme
+  applicant: old_applicant
+  job_posting: customer_support_published
+  hiring_process: default_process
+  current_stage: default_decision
+  status: 1  # hired
+  applied_at: <%= 60.days.ago %>
+  hired_at: <%= 14.days.ago %>
+  hired_by: acme_hiring_manager
+  rejected_at: null
+  rejected_by: null
+  rejection_reason: null
+  archived_at: null
+  notes: "Excellent candidate, strong customer service skills"
+  created_at: <%= 60.days.ago %>
+  updated_at: <%= 14.days.ago %>
+
+# APPLICATION: Recently Hired
+# PURPOSE: Test recent hire, time-to-hire metrics
+# USAGE: Test analytics, dashboard queries
+# STATUS: hired (1)
+# HIRED: 2 days ago
+recently_hired_application:
+  brand: acme
+  applicant: international_applicant
+  job_posting: sales_rep_published
+  hiring_process: default_process
+  current_stage: default_decision
+  status: 1  # hired
+  applied_at: <%= 30.days.ago %>
+  hired_at: <%= 2.days.ago %>
+  hired_by: acme_admin
+  rejected_at: null
+  rejected_by: null
+  rejection_reason: null
+  archived_at: null
+  notes: "Excellent bilingual candidate, perfect for LATAM market"
+  created_at: <%= 30.days.ago %>
+  updated_at: <%= 2.days.ago %>
+
+# =============================================================================
+# REJECTED APPLICATIONS
+# =============================================================================
+
+# APPLICATION: Rejected
+# PURPOSE: Test rejected status, rejection_reason field
+# USAGE: Test reject! method, rejection workflow
+# STATUS: rejected (2)
+# REJECTED_BY: acme_hiring_manager
+rejected_application:
+  brand: acme
+  applicant: no_phone_applicant
+  job_posting: backend_engineer_published
+  hiring_process: default_process
+  current_stage: default_phone_screen
+  status: 2  # rejected
+  applied_at: <%= 20.days.ago %>
+  hired_at: null
+  hired_by: null
+  rejected_at: <%= 10.days.ago %>
+  rejected_by: acme_hiring_manager
+  rejection_reason: "Not enough experience with distributed systems"
+  archived_at: null
+  notes: "Good attitude but lacking required technical depth"
+  created_at: <%= 20.days.ago %>
+  updated_at: <%= 10.days.ago %>
+
+# APPLICATION: Rejected Early Stage
+# PURPOSE: Test rejection at initial stage
+# USAGE: Test early rejection workflow
+# STATUS: rejected (2)
+# STAGE: Application Review (rejected before phone screen)
+rejected_early_application:
+  brand: acme
+  applicant: flagged_applicant
+  job_posting: customer_support_published
+  hiring_process: default_process
+  current_stage: default_application
+  status: 2  # rejected
+  applied_at: <%= 15.days.ago %>
+  hired_at: null
+  hired_by: null
+  rejected_at: <%= 12.days.ago %>
+  rejected_by: acme_admin
+  rejection_reason: "Duplicate application detected - applicant already in system"
+  archived_at: null
+  notes: "Flagged as suspicious, confirmed duplicate"
+  created_at: <%= 15.days.ago %>
+  updated_at: <%= 12.days.ago %>
+
+# =============================================================================
+# ARCHIVED APPLICATIONS
+# =============================================================================
+
+# APPLICATION: Archived (from hired)
+# PURPOSE: Test archived status after hiring
+# USAGE: Test archive! transition from hired state
+# STATUS: archived (3)
+archived_hired_application:
+  brand: acme
+  applicant: recent_applicant
+  job_posting: old_posting
+  hiring_process: default_process
+  current_stage: default_decision
+  status: 3  # archived
+  applied_at: <%= 90.days.ago %>
+  hired_at: <%= 60.days.ago %>
+  hired_by: acme_admin
+  rejected_at: null
+  rejected_by: null
+  rejection_reason: null
+  archived_at: <%= 30.days.ago %>
+  notes: "Hired and archived for record keeping"
+  created_at: <%= 90.days.ago %>
+  updated_at: <%= 30.days.ago %>
+
+# APPLICATION: Archived (from rejected)
+# PURPOSE: Test archived status after rejection
+# USAGE: Test archive! transition from rejected state
+# STATUS: archived (3)
+archived_rejected_application:
+  brand: acme
+  applicant: old_applicant
+  job_posting: data_analyst_unpublished
+  hiring_process: default_process
+  current_stage: default_technical
+  status: 3  # archived
+  applied_at: <%= 120.days.ago %>
+  hired_at: null
+  hired_by: null
+  rejected_at: <%= 90.days.ago %>
+  rejected_by: acme_hiring_manager
+  rejection_reason: "Position filled"
+  archived_at: <%= 60.days.ago %>
+  notes: "Archived old application"
+  created_at: <%= 120.days.ago %>
+  updated_at: <%= 60.days.ago %>
+
+# =============================================================================
+# GLOBEX BRAND APPLICATIONS (Multi-Tenant Testing)
+# =============================================================================
+
+# APPLICATION: Globex Application
+# PURPOSE: Test multi-tenant brand scoping
+# USAGE: Verify users from :acme cannot see this application (belongs to :globex)
+# SECURITY: Critical for testing data isolation between brands
+globex_application:
+  brand: globex
+  applicant: globex_applicant
+  job_posting: globex_engineer_published
+  hiring_process: globex_default_process
+  current_stage: globex_application
+  status: 0  # in_progress
+  applied_at: <%= 10.days.ago %>
+  hired_at: null
+  hired_by: null
+  rejected_at: null
+  rejected_by: null
+  rejection_reason: null
+  archived_at: null
+  notes: "Globex brand application"
+  created_at: <%= 10.days.ago %>
+  updated_at: <%= 5.days.ago %>
+
+# =============================================================================
+# EDGE CASES
+# =============================================================================
+
+# APPLICATION: No Notes
+# PURPOSE: Test optional notes field
+# USAGE: Verify notes is not required
+no_notes_application:
+  brand: acme
+  applicant: jane_smith
+  job_posting: sales_rep_published
+  hiring_process: default_process
+  current_stage: default_application
+  status: 0  # in_progress
+  applied_at: <%= 3.days.ago %>
+  hired_at: null
+  hired_by: null
+  rejected_at: null
+  rejected_by: null
+  rejection_reason: null
+  archived_at: null
+  notes: null
+  created_at: <%= 3.days.ago %>
+  updated_at: <%= 3.days.ago %>
+
+# APPLICATION: No Current Stage (Just Applied)
+# PURPOSE: Test null current_stage (before review starts)
+# USAGE: Test initial application state
+no_stage_application:
+  brand: acme
+  applicant: recent_applicant
+  job_posting: recent_posting
+  hiring_process: default_process
+  current_stage: null
+  status: 0  # in_progress
+  applied_at: <%= 1.hour.ago %>
+  hired_at: null
+  hired_by: null
+  rejected_at: null
+  rejected_by: null
+  rejection_reason: null
+  archived_at: null
+  notes: null
+  created_at: <%= 1.hour.ago %>
+  updated_at: <%= 1.hour.ago %>

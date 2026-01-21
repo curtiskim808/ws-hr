@@ -249,7 +249,7 @@ class Application < ApplicationRecord
   def hire!(user)
     transaction do
       self.hired_by = user
-      hire! # Call AASM event
+      aasm.fire(:hire) # Call AASM event (not self.hire! which would be recursive)
       save!
     end
   end
@@ -280,7 +280,7 @@ class Application < ApplicationRecord
     transaction do
       self.rejection_reason = reason
       self.rejected_by = user
-      reject! # Call AASM event
+      aasm.fire(:reject) # Call AASM event (not self.reject! which would be recursive)
       save!
     end
   end

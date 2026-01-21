@@ -1,0 +1,207 @@
+# Applicant Fixtures - T111
+#
+# FIXTURES PHILOSOPHY:
+# - Fixtures represent realistic, stable test data
+# - They're shared across all tests, reducing duplication
+# - Named semantically to make tests readable
+# - Use ERB for dynamic values like timestamps
+#
+# MULTI-TENANT DESIGN:
+# - All applicants belong to brand :acme (from brands.yml)
+# - Tests verify brand scoping works correctly
+# - Cross-brand access tests use brand :globex
+#
+# FIXTURE NAMING:
+# - Use descriptive names that indicate the applicant's role in tests
+# - Examples: john_doe, jane_smith, flagged_applicant
+# - Makes test code self-documenting: applicants(:john_doe)
+#
+# APPLICANT SOURCES:
+# - linkedin: Applied via LinkedIn integration
+# - referral: Employee referral
+# - careers_page: Applied via public careers page
+# - job_board: Applied via external job board
+
+# =============================================================================
+# PRIMARY APPLICANTS (For general testing)
+# =============================================================================
+
+# APPLICANT: John Doe
+# PURPOSE: Primary test applicant for most test scenarios
+# USAGE: Use for application submission, hiring, rejection tests
+# SOURCE: linkedin
+john_doe:
+  brand: acme
+  first_name: John
+  last_name: Doe
+  email: john.doe@example.com
+  phone: '+1-555-0100'
+  preferred_language: en
+  source: linkedin
+  flagged: false
+  flag_reason: null
+  created_at: <%= 30.days.ago %>
+  updated_at: <%= 20.days.ago %>
+
+# APPLICANT: Jane Smith
+# PURPOSE: Secondary test applicant for multi-applicant scenarios
+# USAGE: Use for testing multiple applicants per job posting
+# SOURCE: referral
+jane_smith:
+  brand: acme
+  first_name: Jane
+  last_name: Smith
+  email: jane.smith@example.com
+  phone: '+1-555-0101'
+  preferred_language: en
+  source: referral
+  flagged: false
+  flag_reason: null
+  created_at: <%= 25.days.ago %>
+  updated_at: <%= 15.days.ago %>
+
+# APPLICANT: Bob Wilson
+# PURPOSE: Test applicant with different source
+# USAGE: Test source filtering, careers page applications
+# SOURCE: careers_page
+bob_wilson:
+  brand: acme
+  first_name: Bob
+  last_name: Wilson
+  email: bob.wilson@example.com
+  phone: '+1-555-0102'
+  preferred_language: en
+  source: careers_page
+  flagged: false
+  flag_reason: null
+  created_at: <%= 20.days.ago %>
+  updated_at: <%= 10.days.ago %>
+
+# =============================================================================
+# SPECIAL CASE APPLICANTS
+# =============================================================================
+
+# APPLICANT: Flagged Applicant
+# PURPOSE: Test flagging functionality
+# USAGE: Test flagged scope, admin review workflows
+# FLAGGED: true (suspicious activity)
+flagged_applicant:
+  brand: acme
+  first_name: Sam
+  last_name: Suspicious
+  email: sam.suspicious@example.com
+  phone: '+1-555-0103'
+  preferred_language: en
+  source: job_board
+  flagged: true
+  flag_reason: "Possible duplicate - same resume as applicant #42"
+  created_at: <%= 15.days.ago %>
+  updated_at: <%= 5.days.ago %>
+
+# APPLICANT: No Phone Applicant
+# PURPOSE: Test optional phone field
+# USAGE: Verify phone is not required
+# PHONE: null
+no_phone_applicant:
+  brand: acme
+  first_name: Pat
+  last_name: NoPhone
+  email: pat.nophone@example.com
+  phone: null
+  preferred_language: en
+  source: linkedin
+  flagged: false
+  flag_reason: null
+  created_at: <%= 10.days.ago %>
+  updated_at: <%= 5.days.ago %>
+
+# APPLICANT: International Applicant
+# PURPOSE: Test internationalization (preferred_language)
+# USAGE: Test language preference handling
+# LANGUAGE: es (Spanish)
+international_applicant:
+  brand: acme
+  first_name: Maria
+  last_name: Garcia
+  email: maria.garcia@example.com
+  phone: '+34-555-0104'
+  preferred_language: es
+  source: careers_page
+  flagged: false
+  flag_reason: null
+  created_at: <%= 8.days.ago %>
+  updated_at: <%= 3.days.ago %>
+
+# APPLICANT: Multiple Applications Applicant
+# PURPOSE: Test applicant with multiple applications
+# USAGE: Use with applications fixtures for multiple job applications
+# NOTE: This applicant has applied to multiple jobs (see applications.yml)
+multiple_apps_applicant:
+  brand: acme
+  first_name: Alex
+  last_name: MultiApp
+  email: alex.multiapp@example.com
+  phone: '+1-555-0105'
+  preferred_language: en
+  source: linkedin
+  flagged: false
+  flag_reason: null
+  created_at: <%= 40.days.ago %>
+  updated_at: <%= 5.days.ago %>
+
+# =============================================================================
+# GLOBEX BRAND APPLICANTS (Multi-Tenant Testing)
+# =============================================================================
+
+# APPLICANT: Globex Applicant
+# PURPOSE: Test multi-tenant brand scoping
+# USAGE: Verify users from :acme cannot see this applicant (belongs to :globex)
+# SECURITY: Critical for testing data isolation between brands
+globex_applicant:
+  brand: globex
+  first_name: Gloria
+  last_name: Globex
+  email: gloria@globex-external.com
+  phone: '+1-555-0200'
+  preferred_language: en
+  source: careers_page
+  flagged: false
+  flag_reason: null
+  created_at: <%= 20.days.ago %>
+  updated_at: <%= 10.days.ago %>
+
+# =============================================================================
+# EDGE CASES
+# =============================================================================
+
+# APPLICANT: Recent Applicant (Created today)
+# PURPOSE: Test recent scope, sorting by created_at
+# USAGE: Test "recent applicants" dashboard queries
+recent_applicant:
+  brand: acme
+  first_name: Rita
+  last_name: Recent
+  email: rita.recent@example.com
+  phone: '+1-555-0106'
+  preferred_language: en
+  source: careers_page
+  flagged: false
+  flag_reason: null
+  created_at: <%= 1.hour.ago %>
+  updated_at: <%= 1.hour.ago %>
+
+# APPLICANT: Old Applicant (90+ days ago)
+# PURPOSE: Test applicant retention, old data queries
+# USAGE: Test applicant history, long-term tracking
+old_applicant:
+  brand: acme
+  first_name: Otto
+  last_name: Old
+  email: otto.old@example.com
+  phone: '+1-555-0107'
+  preferred_language: en
+  source: referral
+  flagged: false
+  flag_reason: null
+  created_at: <%= 120.days.ago %>
+  updated_at: <%= 90.days.ago %>

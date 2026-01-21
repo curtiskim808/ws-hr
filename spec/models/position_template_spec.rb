@@ -184,7 +184,6 @@ RSpec.describe PositionTemplate, type: :model do
     describe '.recent' do
       it 'returns templates ordered by created_at descending' do
         recent_templates = PositionTemplate.recent.limit(3)
-
         # Most recent template should be first
         expect(recent_templates.first).to eq(position_templates(:minimal_template))
 
@@ -286,7 +285,7 @@ RSpec.describe PositionTemplate, type: :model do
     # EXPECTATION: destroy! succeeds, template removed from database
     context 'when template has no associated job_postings' do
       it 'allows deletion' do
-        template = position_templates(:minimal_template)
+        template = position_templates(:no_associated_job_postings_template)
 
         # Verify no job_postings exist
         expect(template.job_postings.count).to eq(0)
@@ -315,7 +314,7 @@ RSpec.describe PositionTemplate, type: :model do
       globex_templates = PositionTemplate.where(brand: brands(:globex))
 
       # Acme has 5 templates
-      expect(acme_templates.count).to eq(5)
+      expect(acme_templates.count).to eq(6)
 
       # Globex has 1 template
       expect(globex_templates.count).to eq(1)
@@ -365,10 +364,9 @@ RSpec.describe PositionTemplate, type: :model do
     # TEST: Cache is invalidated after destroying a template
     # EXPECTATION: Rails.cache.delete called with correct key
     it 'invalidates active cache after destroy' do
-      template = position_templates(:minimal_template)
+      template = position_templates(:no_associated_job_postings_template)
 
       expect(Rails.cache).to receive(:delete).with("position_templates/active/#{template.brand_id}")
-
       template.destroy!
     end
   end

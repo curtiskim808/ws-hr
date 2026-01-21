@@ -24,6 +24,11 @@ class User < ApplicationRecord
   validates :email, uniqueness: { scope: :brand_id }
   validates :role, presence: true
 
+  # Instance methods
+  def full_name
+    "#{first_name} #{last_name}"
+  end
+
   # Authorization methods
   def can_manage_application?(application)
     role_super_admin? || role_admin? ||

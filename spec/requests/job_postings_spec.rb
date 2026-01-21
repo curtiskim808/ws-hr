@@ -349,8 +349,9 @@ RSpec.describe 'Job Postings API', type: :request do
 
       it 'returns 403 forbidden' do
         posting = job_postings(:backend_engineer_published)
-        patch "/api/v1/job_postings/#{posting.id}", headers: headers,
-              params: { job_posting: { job_title: 'Updated Title' } }
+        patch "/api/v1/job_postings/#{posting.id}", 
+              params: { job_posting: { job_title: 'Updated Title' } }.to_json,
+              headers: headers.merge('Content-Type' => 'application/json')
         expect(response).to have_http_status(:forbidden)
       end
     end
@@ -368,8 +369,9 @@ RSpec.describe 'Job Postings API', type: :request do
         posting = job_postings(:backend_engineer_published)
         new_title = 'Updated Backend Engineer Title'
 
-        patch "/api/v1/job_postings/#{posting.id}", headers: headers,
-              params: { job_posting: { job_title: new_title } }
+        patch "/api/v1/job_postings/#{posting.id}", 
+              params: { job_posting: { job_title: new_title } }.to_json,
+              headers: headers.merge('Content-Type' => 'application/json')
 
         expect(response).to have_http_status(:ok)
 
@@ -385,8 +387,9 @@ RSpec.describe 'Job Postings API', type: :request do
         new_description = 'Updated job description'
         new_requirements = 'Updated requirements'
 
-        patch "/api/v1/job_postings/#{posting.id}", headers: headers,
-              params: { job_posting: { description: new_description, requirements: new_requirements } }
+        patch "/api/v1/job_postings/#{posting.id}", 
+              params: { job_posting: { description: new_description, requirements: new_requirements } }.to_json,
+              headers: headers.merge('Content-Type' => 'application/json')
 
         expect(response).to have_http_status(:ok)
 
@@ -410,8 +413,9 @@ RSpec.describe 'Job Postings API', type: :request do
         expect(posting.status).to eq('draft')
         expect(posting.published_at).to be_nil
 
-        patch "/api/v1/job_postings/#{posting.id}", headers: headers,
-              params: { job_posting: { status: 'published' } }
+        patch "/api/v1/job_postings/#{posting.id}", 
+              params: { job_posting: { status: 'published' } }.to_json,
+              headers: headers.merge('Content-Type' => 'application/json')
 
         expect(response).to have_http_status(:ok)
 
@@ -428,8 +432,9 @@ RSpec.describe 'Job Postings API', type: :request do
         posting = job_postings(:devops_engineer_link_only)
         expect(posting.status).to eq('link_only')
 
-        patch "/api/v1/job_postings/#{posting.id}", headers: headers,
-              params: { job_posting: { status: 'published' } }
+        patch "/api/v1/job_postings/#{posting.id}", 
+              params: { job_posting: { status: 'published' } }.to_json,
+              headers: headers.merge('Content-Type' => 'application/json')
 
         expect(response).to have_http_status(:ok)
 
@@ -441,8 +446,9 @@ RSpec.describe 'Job Postings API', type: :request do
         posting = job_postings(:data_analyst_unpublished)
         expect(posting.status).to eq('unpublished')
 
-        patch "/api/v1/job_postings/#{posting.id}", headers: headers,
-              params: { job_posting: { status: 'published' } }
+        patch "/api/v1/job_postings/#{posting.id}", 
+              params: { job_posting: { status: 'published' } }.to_json,
+              headers: headers.merge('Content-Type' => 'application/json')
 
         expect(response).to have_http_status(:unprocessable_entity)
 
@@ -469,8 +475,9 @@ RSpec.describe 'Job Postings API', type: :request do
         expect(posting.status).to eq('published')
         expect(posting.unpublished_at).to be_nil
 
-        patch "/api/v1/job_postings/#{posting.id}", headers: headers,
-              params: { job_posting: { status: 'unpublished' } }
+        patch "/api/v1/job_postings/#{posting.id}", 
+              params: { job_posting: { status: 'unpublished' } }.to_json,
+              headers: headers.merge('Content-Type' => 'application/json')
 
         expect(response).to have_http_status(:ok)
 
@@ -487,8 +494,9 @@ RSpec.describe 'Job Postings API', type: :request do
         posting = job_postings(:devops_engineer_link_only)
         expect(posting.status).to eq('link_only')
 
-        patch "/api/v1/job_postings/#{posting.id}", headers: headers,
-              params: { job_posting: { status: 'unpublished' } }
+        patch "/api/v1/job_postings/#{posting.id}", 
+              params: { job_posting: { status: 'unpublished' } }.to_json,
+              headers: headers.merge('Content-Type' => 'application/json')
 
         expect(response).to have_http_status(:ok)
 
@@ -500,8 +508,9 @@ RSpec.describe 'Job Postings API', type: :request do
         posting = job_postings(:marketing_manager_draft)
         expect(posting.status).to eq('draft')
 
-        patch "/api/v1/job_postings/#{posting.id}", headers: headers,
-              params: { job_posting: { status: 'unpublished' } }
+        patch "/api/v1/job_postings/#{posting.id}", 
+              params: { job_posting: { status: 'unpublished' } }.to_json,
+              headers: headers.merge('Content-Type' => 'application/json')
 
         expect(response).to have_http_status(:unprocessable_entity)
 
@@ -526,8 +535,9 @@ RSpec.describe 'Job Postings API', type: :request do
         posting = job_postings(:backend_engineer_published)
         expect(posting.status).to eq('published')
 
-        patch "/api/v1/job_postings/#{posting.id}", headers: headers,
-              params: { job_posting: { status: 'link_only' } }
+        patch "/api/v1/job_postings/#{posting.id}", 
+              params: { job_posting: { status: 'link_only' } }.to_json,
+              headers: headers.merge('Content-Type' => 'application/json')
 
         expect(response).to have_http_status(:ok)
 
@@ -542,8 +552,9 @@ RSpec.describe 'Job Postings API', type: :request do
         posting = job_postings(:marketing_manager_draft)
         expect(posting.status).to eq('draft')
 
-        patch "/api/v1/job_postings/#{posting.id}", headers: headers,
-              params: { job_posting: { status: 'link_only' } }
+        patch "/api/v1/job_postings/#{posting.id}", 
+              params: { job_posting: { status: 'link_only' } }.to_json,
+              headers: headers.merge('Content-Type' => 'application/json')
 
         expect(response).to have_http_status(:unprocessable_entity)
 
@@ -568,8 +579,9 @@ RSpec.describe 'Job Postings API', type: :request do
         posting = job_postings(:marketing_manager_draft)
         new_title = 'Senior Product Marketing Manager'
 
-        patch "/api/v1/job_postings/#{posting.id}", headers: headers,
-              params: { job_posting: { job_title: new_title, status: 'published' } }
+        patch "/api/v1/job_postings/#{posting.id}", 
+              params: { job_posting: { job_title: new_title, status: 'published' } }.to_json,
+              headers: headers.merge('Content-Type' => 'application/json')
 
         expect(response).to have_http_status(:ok)
 
@@ -591,10 +603,15 @@ RSpec.describe 'Job Postings API', type: :request do
       it 'prevents updating postings from other brands' do
         globex_posting = job_postings(:globex_engineer_published)
 
-        expect {
-          patch "/api/v1/job_postings/#{globex_posting.id}", headers: headers,
-                params: { job_posting: { job_title: 'Hacked Title' } }
-        }.to raise_error(ActiveRecord::RecordNotFound)
+        patch "/api/v1/job_postings/#{globex_posting.id}", 
+              params: { job_posting: { job_title: 'Hacked Title' } }.to_json,
+              headers: headers.merge('Content-Type' => 'application/json')
+
+        # Brand scoping prevents access - returns 404 (RecordNotFound is caught by rescue_from)
+        expect(response).to have_http_status(:not_found)
+
+        json = JSON.parse(response.body)
+        expect(json['error']).to eq('Resource not found')
       end
     end
 
@@ -611,8 +628,9 @@ RSpec.describe 'Job Postings API', type: :request do
         posting = job_postings(:backend_engineer_published)
         new_title = 'Updated by Hiring Manager'
 
-        patch "/api/v1/job_postings/#{posting.id}", headers: headers,
-              params: { job_posting: { job_title: new_title } }
+        patch "/api/v1/job_postings/#{posting.id}", 
+              params: { job_posting: { job_title: new_title } }.to_json,
+              headers: headers.merge('Content-Type' => 'application/json')
 
         expect(response).to have_http_status(:ok)
 
@@ -623,8 +641,9 @@ RSpec.describe 'Job Postings API', type: :request do
       it 'allows hiring manager to transition status' do
         posting = job_postings(:marketing_manager_draft)
 
-        patch "/api/v1/job_postings/#{posting.id}", headers: headers,
-              params: { job_posting: { status: 'published' } }
+        patch "/api/v1/job_postings/#{posting.id}", 
+              params: { job_posting: { status: 'published' } }.to_json,
+              headers: headers.merge('Content-Type' => 'application/json')
 
         expect(response).to have_http_status(:ok)
 

@@ -1,0 +1,13 @@
+# Active Storage configuration
+# See https://guides.rubyonrails.org/active_storage_overview.html#setup
+
+test:
+  service: Disk
+  root: <%= Rails.root.join("tmp/storage") %>
+
+local:
+  service: Disk
+  root: <%= Rails.root.join("storage") %>
+
+# Production S3 configuration will be added when needed
+# For now, production will use :local service (can be changed later)
