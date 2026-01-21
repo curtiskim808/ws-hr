@@ -65,8 +65,29 @@ Rails.application.routes.draw do
       # BRAND SCOPING: Automatic (via BrandScoped concern)
       resources :position_templates
 
+      # T072: Job Postings (US2)
+      # ENDPOINTS:
+      # GET    /api/v1/job_postings      - List all job postings
+      # GET    /api/v1/job_postings/:id  - Get single posting
+      # POST   /api/v1/job_postings      - Create posting from template
+      # PATCH  /api/v1/job_postings/:id  - Update posting or change status
+      # DELETE /api/v1/job_postings/:id  - Delete posting
+      #
+      # AUTHENTICATION: Required (via BaseController)
+      # AUTHORIZATION: Admin or Hiring Manager only
+      # BRAND SCOPING: Automatic (via BrandScoped concern)
+      #
+      # STATUS TRANSITIONS (via PATCH):
+      #   PATCH /api/v1/job_postings/:id { "job_posting": { "status": "published" } }
+      #   → Triggers AASM events: publish!, unpublish!, make_link_only!
+      #
+      # QUERY PARAMETERS (index):
+      #   ?status=published - Filter by status
+      #   ?location_id=1 - Filter by location
+      #   ?include=position_template,location - Include relationships
+      resources :job_postings
+
       # FUTURE RESOURCE ROUTES
-      # - resources :job_postings          # US2: Job Postings
       # - resources :applications          # US3: Applications
       # - resources :applicants            # US3: Applicants
       # - resources :availability_slots    # US6: Availability
