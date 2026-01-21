@@ -150,6 +150,42 @@ class HiringProcess < ApplicationRecord
   end
 
   # =============================================================================
+  # T155: BUSINESS LOGIC METHODS - STAGE PROGRESSION
+  # =============================================================================
+
+  # METHOD: next_stage(current_stage)
+  # PURPOSE: Get the next stage in the hiring process after the current stage
+  # PARAMETERS:
+  #   - current_stage: HiringStage instance or nil (for first stage)
+  # RETURNS: HiringStage with position = current_stage.position + 1, or first_stage if current_stage is nil
+  # RETURNS: nil if current_stage is the last stage
+  # USE CASE: Advance application to next stage in workflow
+  #
+  # EXAMPLE:
+  #   process = HiringProcess.find(1)
+  #   current = process.hiring_stages.find_by(position: 2)
+  #   process.next_stage(current)
+  #   => #<HiringStage id: 3, name: "Technical Interview", position: 3>
+  #
+  #   process.next_stage(nil)
+  #   => #<HiringStage id: 1, name: "Application Review", position: 1>
+  #
+  #   last_stage = process.hiring_stages.find_by(position: 4)
+  #   process.next_stage(last_stage)
+  #   => nil
+  def next_stage(current_stage)
+    return first_stage if current_stage.nil?
+
+    # Validate current_stage belongs to this process
+    unless current_stage.hiring_process_id == id
+      raise ArgumentError, "Stage must belong to this hiring process"
+    end
+
+    # Find stage with next position
+    hiring_stages.find_by(position: current_stage.position + 1)
+  end
+
+  # =============================================================================
   # CALLBACKS
   # =============================================================================
 

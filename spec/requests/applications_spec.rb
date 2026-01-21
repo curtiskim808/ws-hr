@@ -746,4 +746,151 @@ RSpec.describe 'Applications API', type: :request do
       end
     end
   end
+
+  # =============================================================================
+  # GET /api/v1/applications/:id (SHOW)
+  # =============================================================================
+  # PURPOSE: Test viewing application detail with complete stage transition history
+  # AUTHENTICATION: Required
+  # T164: View application detail with complete stage transition history
+
+  describe 'GET /api/v1/applications/:id' do
+    let(:application) { applications(:pending_application) }
+    let(:hiring_manager) { users(:acme_hiring_manager) }
+    let(:phone_screen_stage) { hiring_stages(:default_phone_screen) }
+    let(:technical_stage) { hiring_stages(:default_technical) }
+
+    context 'without authentication' do
+      it 'returns 401 unauthorized' do
+        get "/api/v1/applications/#{application.id}", headers: non_auth_headers
+        expect(response).to have_http_status(:unauthorized)
+      end
+    end
+
+    context 'with authentication' do
+      let(:headers) { auth_headers(users(:acme_hiring_manager)) }
+
+      context 'T164: viewing application with stage transition history' do
+        before do
+          # Create stage transitions to test history
+          application.advance_to_stage!(phone_screen_stage, hiring_manager, 'Passed initial review')
+          application.advance_to_stage!(technical_stage, hiring_manager, 'Strong technical skills')
+        end
+
+        it 'returns application details with stage transitions' do
+          get "/api/v1/applications/#{application.id}",
+              params: { include: 'stage_transitions' },
+              headers: headers
+
+          expect(response).to have_http_status(:ok)
+
+          json = JSON.parse(response.body)
+          expect(json['data']).to be_present
+          expect(json['data']['id']).to eq(application.id.to_s)
+          expect(json['data']['attributes']['status']).to eq(application.status)
+        end
+
+        it 'includes stage_transitions in response when requested' do
+          get "/api/v1/applications/#{application.id}",
+              params: { include: 'stage_transitions' },
+              headers: headers
+
+          expect(response).to have_http_status(:ok)
+
+          json = JSON.parse(response.body)
+          
+          # Check that included section has stage transitions
+          included = json['included'] || []
+          stage_transitions = included.select { |item| item['type'] == 'application_stage_transition' }
+          
+          expect(stage_transitions.count).to eq(2)
+          
+          # Verify first transition details
+          first_transition = stage_transitions.first
+          expect(first_transition['attributes']).to include('transitioned_at')
+          expect(first_transition['attributes']).to include('from_stage_name')
+          expect(first_transition['attributes']).to include('to_stage_name')
+          expect(first_transition['attributes']).to include('transitioned_by_name')
+          expect(first_transition['attributes']['notes']).to eq('Passed initial review')
+          
+          # Verify second transition details
+          second_transition = stage_transitions.last
+          expect(second_transition['attributes']['notes']).to eq('Strong technical skills')
+        end
+
+        it 'includes transition user information' do
+          get "/api/v1/applications/#{application.id}",
+              params: { include: 'stage_transitions.transitioned_by' },
+              headers: headers
+
+          expect(response).to have_http_status(:ok)
+
+          json = JSON.parse(response.body)
+          included = json['included'] || []
+          
+          # Find transition with user info
+          transition_with_user = included.find { |item| 
+            item['type'] == 'application_stage_transition' && 
+            item['relationships']['transitioned_by']
+          }
+          
+          expect(transition_with_user).to be_present
+          expect(transition_with_user['attributes']['transitioned_by_name']).to be_present
+        end
+
+        it 'includes stage information in transitions' do
+          get "/api/v1/applications/#{application.id}",
+              params: { include: 'stage_transitions.from_stage,stage_transitions.to_stage' },
+              headers: headers
+
+          expect(response).to have_http_status(:ok)
+
+          json = JSON.parse(response.body)
+          included = json['included'] || []
+          
+          # Find stage transitions
+          transitions = included.select { |item| item['type'] == 'application_stage_transition' }
+          expect(transitions.count).to eq(2)
+          
+          # Verify stage names are included
+          transitions.each do |transition|
+            expect(transition['attributes']['from_stage_name']).to be_present
+            expect(transition['attributes']['to_stage_name']).to be_present
+          end
+        end
+
+        it 'orders transitions chronologically' do
+          get "/api/v1/applications/#{application.id}",
+              params: { include: 'stage_transitions' },
+              headers: headers
+
+          expect(response).to have_http_status(:ok)
+
+          json = JSON.parse(response.body)
+          included = json['included'] || []
+          transitions = included.select { |item| item['type'] == 'application_stage_transition' }
+          
+          # Verify transitions are in chronological order (oldest first)
+          transition_times = transitions.map { |t| Time.parse(t['attributes']['transitioned_at']) }
+          expect(transition_times).to eq(transition_times.sort)
+        end
+      end
+
+      context 'with application that has no transitions' do
+        it 'returns empty transitions array' do
+          get "/api/v1/applications/#{application.id}",
+              params: { include: 'stage_transitions' },
+              headers: headers
+
+          expect(response).to have_http_status(:ok)
+
+          json = JSON.parse(response.body)
+          included = json['included'] || []
+          transitions = included.select { |item| item['type'] == 'application_stage_transition' }
+          
+          expect(transitions).to be_empty
+        end
+      end
+    end
+  end
 end

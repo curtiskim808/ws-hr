@@ -193,6 +193,42 @@ RSpec.describe Application, type: :model do
         expect { rejected_app.hire!(hiring_manager) }.to raise_error(AASM::InvalidTransition)
       end
     end
+
+    # =============================================================================
+    # T162: Prevent hiring from rejected status
+    # =============================================================================
+    context 'T162: preventing hire when already rejected' do
+      let(:rejected_app) { applications(:rejected_application) }
+
+      it 'prevents hiring an already rejected application' do
+        expect(rejected_app.rejected?).to be true
+        expect {
+          rejected_app.hire!(hiring_manager)
+        }.to raise_error(AASM::InvalidTransition)
+      end
+
+      it 'does not change status when hire fails' do
+        original_status = rejected_app.status
+        begin
+          rejected_app.hire!(hiring_manager)
+        rescue AASM::InvalidTransition
+          # Expected
+        end
+        rejected_app.reload
+        expect(rejected_app.status).to eq(original_status)
+      end
+
+      it 'does not set hired_at when hire fails' do
+        original_hired_at = rejected_app.hired_at
+        begin
+          rejected_app.hire!(hiring_manager)
+        rescue AASM::InvalidTransition
+          # Expected
+        end
+        rejected_app.reload
+        expect(rejected_app.hired_at).to eq(original_hired_at)
+      end
+    end
   end
 
   # =============================================================================
@@ -248,6 +284,42 @@ RSpec.describe Application, type: :model do
 
       it 'raises AASM::InvalidTransition' do
         expect { rejected_app.reject!('Double rejection', hiring_manager) }.to raise_error(AASM::InvalidTransition)
+      end
+    end
+
+    # =============================================================================
+    # T163: Prevent rejecting from hired status
+    # =============================================================================
+    context 'T163: preventing reject when already hired' do
+      let(:hired_app) { applications(:hired_application) }
+
+      it 'prevents rejecting an already hired application' do
+        expect(hired_app.hired?).to be true
+        expect {
+          hired_app.reject!('Changed mind', hiring_manager)
+        }.to raise_error(AASM::InvalidTransition)
+      end
+
+      it 'does not change status when reject fails' do
+        original_status = hired_app.status
+        begin
+          hired_app.reject!('Changed mind', hiring_manager)
+        rescue AASM::InvalidTransition
+          # Expected
+        end
+        hired_app.reload
+        expect(hired_app.status).to eq(original_status)
+      end
+
+      it 'does not set rejected_at when reject fails' do
+        original_rejected_at = hired_app.rejected_at
+        begin
+          hired_app.reject!('Changed mind', hiring_manager)
+        rescue AASM::InvalidTransition
+          # Expected
+        end
+        hired_app.reload
+        expect(hired_app.rejected_at).to eq(original_rejected_at)
       end
     end
   end
@@ -308,6 +380,60 @@ RSpec.describe Application, type: :model do
 
         # Verify transition history
         expect(application.stage_transitions.count).to eq(2)
+      end
+
+      # =============================================================================
+      # T161: Stage transition with history tracking
+      # =============================================================================
+      it 'T161: maintains complete history of stage transitions' do
+        initial_stage = application.current_stage
+
+        # First transition: Application Review → Phone Screen
+        application.advance_to_stage!(phone_screen_stage, hiring_manager, 'Passed initial review')
+        first_transition = application.stage_transitions.last
+
+        expect(first_transition.from_stage).to eq(initial_stage)
+        expect(first_transition.to_stage).to eq(phone_screen_stage)
+        expect(first_transition.transitioned_by).to eq(hiring_manager)
+        expect(first_transition.notes).to eq('Passed initial review')
+        expect(first_transition.transitioned_at).to be_present
+
+        # Second transition: Phone Screen → Technical Interview
+        application.advance_to_stage!(technical_stage, hiring_manager, 'Strong technical skills')
+        second_transition = application.stage_transitions.last
+
+        expect(second_transition.from_stage).to eq(phone_screen_stage)
+        expect(second_transition.to_stage).to eq(technical_stage)
+        expect(second_transition.transitioned_by).to eq(hiring_manager)
+        expect(second_transition.notes).to eq('Strong technical skills')
+
+        # Verify chronological order
+        transitions = application.stage_transitions.chronological
+        expect(transitions.count).to eq(2)
+        expect(transitions.first).to eq(first_transition)
+        expect(transitions.last).to eq(second_transition)
+
+        # Verify transition times are sequential
+        expect(second_transition.transitioned_at).to be > first_transition.transitioned_at
+      end
+
+      it 'T161: tracks complete audit trail with user information' do
+        initial_stage = application.current_stage
+        application.advance_to_stage!(phone_screen_stage, hiring_manager, 'Notes here')
+
+        transition = application.stage_transitions.last
+
+        # Verify all audit fields are present
+        expect(transition.application).to eq(application)
+        expect(transition.from_stage).to eq(initial_stage)
+        expect(transition.to_stage).to eq(phone_screen_stage)
+        expect(transition.transitioned_by).to eq(hiring_manager)
+        expect(transition.transitioned_at).to be_present
+        expect(transition.notes).to eq('Notes here')
+
+        # Verify transition can access user details
+        expect(transition.transitioned_by.full_name).to be_present
+        expect(transition.transitioned_by.email).to be_present
       end
 
       it 'persists the changes' do

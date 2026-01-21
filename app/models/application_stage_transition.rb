@@ -72,6 +72,15 @@ class ApplicationStageTransition < ApplicationRecord
   before_validation :set_default_transitioned_at, on: :create
 
   # =============================================================================
+  # T159: NOTIFICATION CALLBACKS
+  # =============================================================================
+  # NOTE: Stage change notifications are handled by the Application model's
+  # after_commit callback (T126) when current_stage_id changes. This ensures
+  # a single notification is sent per stage change, avoiding duplicates.
+  # The ApplicationStageTransition record serves as the audit trail, but the
+  # notification is triggered by the Application model's stage change.
+
+  # =============================================================================
   # T102: SCOPES
   # =============================================================================
 
@@ -203,4 +212,5 @@ class ApplicationStageTransition < ApplicationRecord
       errors.add(:from_stage, "must belong to the application's hiring process")
     end
   end
+
 end

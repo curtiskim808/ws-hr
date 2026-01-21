@@ -163,6 +163,7 @@ class Application < ApplicationRecord
     # TO STATE: hired
     # CALLBACK: Sets hired_at timestamp
     # GUARD: Must be called via hire!(user) method which sets hired_by
+    # GUARD: T157 - Cannot hire from rejected status
     #
     # EXAMPLE:
     #   application.hire!(current_user)
@@ -170,7 +171,7 @@ class Application < ApplicationRecord
     #   application.hired_at        # => 2026-01-21 10:30:00 UTC
     #   application.hired_by        # => #<User id: 1>
     event :hire, after: :record_hired_at do
-      transitions from: :in_progress, to: :hired
+      transitions from: :in_progress, to: :hired, guard: :can_hire?
     end
 
     # EVENT: reject
@@ -179,6 +180,7 @@ class Application < ApplicationRecord
     # TO STATE: rejected
     # CALLBACK: Sets rejected_at timestamp
     # GUARD: Must be called via reject!(reason, user) method
+    # GUARD: T158 - Cannot reject from hired status
     #
     # EXAMPLE:
     #   application.reject!("Not enough experience", current_user)
@@ -186,7 +188,7 @@ class Application < ApplicationRecord
     #   application.rejected_at     # => 2026-01-21 10:30:00 UTC
     #   application.rejection_reason # => "Not enough experience"
     event :reject, after: :record_rejected_at do
-      transitions from: :in_progress, to: :rejected
+      transitions from: :in_progress, to: :rejected, guard: :can_reject?
     end
 
     # EVENT: archive
@@ -547,6 +549,42 @@ class Application < ApplicationRecord
   # ACTION: Enqueue NotificationJob with :stage_changed event
   # USE CASE: Notify hiring team when candidate advances
   after_commit :publish_stage_changed_notification, if: :saved_change_to_current_stage_id?
+
+  # =============================================================================
+  # T157-T158: AASM GUARD METHODS
+  # =============================================================================
+
+  # METHOD: can_hire?
+  # PURPOSE: Guard method for AASM hire event
+  # T157: Prevent hiring from rejected status
+  # RETURNS: true if application is in_progress, false if rejected or hired
+  # USE CASE: AASM guard to prevent invalid state transitions
+  #
+  # EXAMPLE:
+  #   application.status = 'in_progress'
+  #   application.can_hire?  # => true
+  #
+  #   application.status = 'rejected'
+  #   application.can_hire?  # => false
+  def can_hire?
+    in_progress?
+  end
+
+  # METHOD: can_reject?
+  # PURPOSE: Guard method for AASM reject event
+  # T158: Prevent rejecting from hired status
+  # RETURNS: true if application is in_progress, false if hired or rejected
+  # USE CASE: AASM guard to prevent invalid state transitions
+  #
+  # EXAMPLE:
+  #   application.status = 'in_progress'
+  #   application.can_reject?  # => true
+  #
+  #   application.status = 'hired'
+  #   application.can_reject?  # => false
+  def can_reject?
+    in_progress?
+  end
 
   # =============================================================================
   # PRIVATE METHODS - AASM CALLBACKS
