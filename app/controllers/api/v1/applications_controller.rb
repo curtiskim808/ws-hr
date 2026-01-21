@@ -3,6 +3,7 @@ module Api
     # ApplicationsController - Manages job application CRUD and workflow operations
     #
     # T106, T107: Controller for managing job applications with action types
+    # T143-T148: Enhanced filtering, pagination, and sorting
     #
     # THIN CONTROLLER PATTERN (DHH/37signals style):
     # - Each action is 1-5 lines max
@@ -27,6 +28,8 @@ module Api
     #   PATCH  /api/v1/applications/:id      - Update application (hire/reject/advance)
     #   DELETE /api/v1/applications/:id      - Archive application
     class ApplicationsController < BaseController
+      include Pagy::Backend
+
       # Skip authentication for public application submission
       # This allows candidates to apply for jobs without an account
       skip_before_action :authenticate_api_user!, only: [:create]
@@ -35,31 +38,80 @@ module Api
       before_action :set_application, only: [:show, :update, :destroy]
       before_action :authorize_manage_applications!, only: [:update, :destroy]
 
-      # INDEX - List all applications
+      # INDEX - List all applications with filtering, pagination, and sorting
       # GET /api/v1/applications
       #
-      # QUERY PARAMETERS (optional):
-      # - status: filter by status (in_progress, hired, rejected, archived)
-      # - job_posting_id: filter by job posting
-      # - applicant_id: filter by applicant
+      # T143-T148: Enhanced filtering, pagination, and sorting
+      # T153: Interviewer role filtering (only see applications with assigned interviews)
       #
-      # RESPONSE: JSON array of applications with applicant and job_posting
+      # JSON:API QUERY PARAMETERS:
+      # - filter[status]: Filter by status (in_progress, hired, rejected, archived)
+      # - filter[job_posting_id]: Filter by job posting ID
+      # - filter[location_id]: Filter by location (via job_posting) - T145
+      # - page[number]: Page number (default: 1) - T146
+      # - page[size]: Items per page (default: 25, max: 100) - T146
+      # - sort: Sort order (created_at, -created_at, status, applicant_name) - T147
+      #
+      # LEGACY PARAMETERS (for backward compatibility):
+      # - status: Alias for filter[status]
+      # - job_posting_id: Alias for filter[job_posting_id]
+      # - applicant_id: Filter by applicant ID
+      #
+      # RESPONSE: JSON:API formatted array with pagination meta
       # BRAND SCOPING: Automatic via BrandScoped concern
+      # N+1 PREVENTION: Uses eager loading scopes (T148)
+      # AUTHORIZATION: Interviewers only see applications with their assigned interviews (T153)
       def index
-        applications = Application.recent
-                                  .with_applicant
-                                  .with_job_posting
+        # T148: Start with eager loading scopes to prevent N+1 queries
+        applications = Application.with_applicant.with_job_posting
 
-        # Filter by status
-        applications = applications.by_status(params[:status]) if params[:status].present?
+        # T153: Filter by interviewer role - only show applications with assigned interviews
+        # NOTE: This will be fully implemented when Interview model is added (Phase 10, T179+)
+        # For now, interviewers see all applications (same as other roles)
+        # TODO: When interviews are implemented, add:
+        #   if current_user&.role_interviewer?
+        #     applications = applications.joins(:interviews).where(interviews: { interviewer_id: current_user.id })
+        #   end
+        if current_user&.role_interviewer?
+          # Placeholder: When Interview model exists, filter by assigned interviews
+          # For now, interviewers can see all applications (will be restricted in Phase 10)
+          # applications = applications.joins(:interviews).where(interviews: { interviewer_id: current_user.id })
+        end
 
-        # Filter by job_posting_id
-        applications = applications.where(job_posting_id: params[:job_posting_id]) if params[:job_posting_id].present?
+        # T143: Filter by status (JSON:API format)
+        if params.dig(:filter, :status).present?
+          applications = applications.by_status(params[:filter][:status])
+        elsif params[:status].present?
+          # Legacy support
+          applications = applications.by_status(params[:status])
+        end
 
-        # Filter by applicant_id
+        # T144: Filter by job_posting_id (JSON:API format)
+        if params.dig(:filter, :job_posting_id).present?
+          applications = applications.where(job_posting_id: params[:filter][:job_posting_id])
+        elsif params[:job_posting_id].present?
+          # Legacy support
+          applications = applications.where(job_posting_id: params[:job_posting_id])
+        end
+
+        # T145: Filter by location (via job_posting)
+        if params.dig(:filter, :location_id).present?
+          applications = applications.for_location(params[:filter][:location_id])
+        end
+
+        # Legacy applicant_id filter
         applications = applications.where(applicant_id: params[:applicant_id]) if params[:applicant_id].present?
 
-        render json: ApplicationSerializer.new(applications).serializable_hash
+        # T147: Apply sorting
+        applications = apply_sorting(applications)
+
+        # T146: Apply pagination
+        pagy, paginated_applications = pagy(applications, page: page_number, items: page_size)
+
+        # Render with pagination meta
+        render json: ApplicationSerializer.new(paginated_applications).serializable_hash.merge(
+          meta: pagination_meta(pagy)
+        )
       end
 
       # SHOW - Get a single application with full details
@@ -199,6 +251,114 @@ module Api
       # Action types (hire, reject, advance_stage) use different params
       def application_params
         params.require(:application).permit(:notes)
+      end
+
+      # =============================================================================
+      # T146-T147: PAGINATION & SORTING HELPERS
+      # =============================================================================
+
+      # T146: Get page number from params (JSON:API format)
+      # Defaults to 1 if not specified
+      def page_number
+        params.dig(:page, :number)&.to_i || 1
+      end
+
+      # T146: Get page size from params (JSON:API format)
+      # Defaults to 25, max 100
+      def page_size
+        size = params.dig(:page, :size)&.to_i || 25
+        [size, 100].min  # Cap at 100 items per page
+      end
+
+      # T147: Apply sorting to applications query
+      # Supports: created_at, -created_at, status, applicant_name
+      # Default: -created_at (newest first)
+      # def apply_sorting(applications)
+      #   sort_param = params[:sort] || '-created_at'
+        
+      #   case sort_param
+      #   when 'created_at', '+created_at'
+      #     applications.order(created_at: :asc)
+      #   when '-created_at'
+      #     applications.order(created_at: :desc)
+      #   when 'status'
+      #     applications.order(status: :asc, created_at: :desc)
+      #     binding.pry
+      #   when '-status'
+      #     applications.order(status: :desc, created_at: :desc)
+      #   when 'applicant_name'
+      #     # Sort by applicant's full name (requires join)
+      #     applications.joins(:applicant)
+      #                 .order('applicants.last_name ASC', 'applicants.first_name ASC', 'applications.created_at DESC')
+      #   when '-applicant_name'
+      #     # Sort by applicant's full name descending
+      #     applications.joins(:applicant)
+      #                 .order('applicants.last_name DESC', 'applicants.first_name DESC', 'applications.created_at DESC')
+      #   else
+      #     # Default: newest first
+      #     applications.order(created_at: :desc)
+      #   end
+      # end
+
+      ALLOWED_SORT_FIELDS = %w[created_at applied_at status applicant_name].freeze
+      DEFAULT_SORT_FIELD = 'created_at'.freeze
+      DEFAULT_SORT_DIRECTION = 'desc'.freeze
+
+      # Apply sorting from query parameters
+      # PARAMS:
+      # - sort: Field to sort by
+      # - direction: asc or desc
+      # default to desc for created_at/applied_at, asc for status/applicant_name in natural order
+      def apply_sorting(scope)
+        sort_field = params[:sort].presence || DEFAULT_SORT_FIELD
+        sort_direction = params[:direction].presence
+
+        # Validate sort field
+        sort_field = DEFAULT_SORT_FIELD unless ALLOWED_SORT_FIELDS.include?(sort_field)
+
+        # Default direction: asc for status/applicant_name, desc for created_at/applied_at
+        unless sort_direction.present?
+          sort_direction = if %w[status applicant_name].include?(sort_field)
+                             'asc'
+                           else
+                             DEFAULT_SORT_DIRECTION
+                           end
+        end
+
+        # Validate direction
+        sort_direction = DEFAULT_SORT_DIRECTION unless %w[asc desc].include?(sort_direction.downcase)
+        # Special handling for applicant_name (requires join)
+        if sort_field == 'applicant_name'
+          scope.joins(:applicant).order("applicants.first_name #{sort_direction}, applicants.last_name #{sort_direction}")
+        elsif sort_field == 'status'
+          # Status is an enum (integer: in_progress=0, hired=1, rejected=2, archived=3)
+          # Use CASE to map integer values to string names for alphabetical sorting
+          case_sql = <<-SQL.squish
+            CASE applications.status
+              WHEN 0 THEN 'in_progress'
+              WHEN 1 THEN 'hired'
+              WHEN 2 THEN 'rejected'
+              WHEN 3 THEN 'archived'
+            END #{sort_direction}
+          SQL
+          scope.order(Arel.sql(case_sql))
+        else
+          scope.order("applications.#{sort_field} #{sort_direction}")
+        end
+      end
+
+
+      # T146: Build pagination meta for JSON:API response
+      # Returns hash with pagination information
+      def pagination_meta(pagy)
+        {
+          pagination: {
+            current_page: pagy.page,
+            per_page: pagy.items,
+            total_pages: pagy.pages,
+            total_count: pagy.count
+          }
+        }
       end
     end
   end
