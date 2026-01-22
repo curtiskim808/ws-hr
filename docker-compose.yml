@@ -68,7 +68,8 @@ services:
       args:
         RAILS_ENV: development
         # Don't set BUNDLE_WITHOUT for development - this installs all gems including dev/test
-    command: bundle exec rake solid_queue:start
+    command: >
+      bash -c "rails db:schema:load SCHEMA=db/queue_schema.rb && bundle exec rake solid_queue:start"
     env_file:
       - .env
     environment:

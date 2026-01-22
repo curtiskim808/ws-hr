@@ -97,7 +97,6 @@ bin/rails server
 curl http://localhost:3000/api-docs
 ```
 
-
 ## Architecture
 
 ### System Architecture Diagram
@@ -337,6 +336,8 @@ When running `docker-compose up`, services start in this order:
 
 ## Testing
 
+
+
 ```bash
 # Run all tests
 docker-compose exec web bundle exec rspec
@@ -350,6 +351,105 @@ docker-compose exec web bundle exec rspec --format documentation
 # Run with coverage
 docker-compose exec web bundle exec rspec --format documentation --format html --out coverage.html
 ```
+
+### Testing (Manual) Using cURL or Postman
+After running `rails db:seed`, use these credentials:
+
+**Nike Brand:**
+- **Super Admin**: `admin@nike.com` / `password123`
+- **Admin**: `manager@nike.com` / `password123`
+- **Hiring Manager**: `hiring@nike.com` / `password123`
+- **Interviewer**: `interviewer@nike.com` / `password123`
+
+**Adidas Brand:**
+- **Super Admin**: `admin@adidas.com` / `password123`
+- **Admin**: `manager@adidas.com` / `password123`
+- **Hiring Manager**: `hiring@adidas.com` / `password123`
+- **Interviewer**: `interviewer@adidas.com` / `password123`
+
+#### 1. Login
+
+**cURL:**
+```bash
+curl -X POST http://localhost:3000/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "admin@nike.com",
+    "password": "password123"
+  }'
+```
+
+**Response:**
+```json
+{
+  "message": "Logged in successfully",
+  "user": {
+    "id": 2,
+    "email": "admin@nike.com",
+    "first_name": "Nike",
+    "last_name": "Admin",
+    "role": "admin",
+    "brand_id": 1
+  }
+}
+```
+
+#### 2. (Important) **Extract JWT Token:**
+The JWT token is returned in the `Authorization` response header. Save it for subsequent requests:
+
+```bash
+TOKEN=$(curl -s -i -X POST http://localhost:3000/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email": "admin@nike.com", "password": "password123"}' \
+  | grep -i "^authorization:" \
+  | awk '{print $3}' \
+  | tr -d '\r')
+
+echo "Token: $TOKEN"
+```
+
+**Postman:**
+1. Create new POST request to `http://localhost:3000/api/v1/auth/login`
+2. Body → raw → JSON:
+   ```json
+   {
+     "email": "admin@nike.com",
+     "password": "password123"
+   }
+   ```
+3. Send request
+4. Copy the `Authorization` header value from response headers
+5. Use it in subsequent requests as: `Authorization: Bearer <token>`
+
+
+#### 3. Position Templates
+
+**cURL:**
+```bash
+curl -X GET "http://localhost:3000/api/v1/position_templates" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -H "Content-Type: application/json"
+```
+
+**With Filters:**
+```bash
+# Filter by status
+curl -X GET "http://localhost:3000/api/v1/position_templates?status=active" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+
+# Filter by category
+curl -X GET "http://localhost:3000/api/v1/position_templates?category=Engineering" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+
+# Pagination
+curl -X GET "http://localhost:3000/api/v1/position_templates?page\[number\]=1&page\[size\]=2" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+```
+
+**Postman:**
+- Method: GET
+- URL: `http://localhost:3000/api/v1/position_templates`
+- Headers: `Authorization: Bearer YOUR_JWT_TOKEN`
 
 ## Database
 
