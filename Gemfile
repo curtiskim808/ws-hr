@@ -69,7 +69,7 @@ group :development, :test do
 
   # Testing framework
   gem "rspec-rails", "~> 7.0"
-  gem "shoulda-matchers", "~> 6.0"
+  gem "shoulda-matchers", "~> 7.0"
   gem "database_cleaner-active_record", "~> 2.2"
   gem "rswag-specs"
 end
