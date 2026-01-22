@@ -258,8 +258,6 @@ RSpec.describe PositionTemplate, type: :model do
     # NOTE: These tests require JobPosting model (implemented in T051-T078)
     context 'when template has associated job_postings' do
       it 'prevents deletion and raises an error' do
-        pending 'JobPosting model not yet implemented (T051-T078)'
-
         # Setup: Create a template with a job_posting
         template = position_templates(:software_engineer)
 
@@ -269,12 +267,13 @@ RSpec.describe PositionTemplate, type: :model do
         job_posting = JobPosting.create!(
           brand: brands(:acme),
           position_template: template,
-          title: 'Backend Engineer',
+          job_title: 'Backend Engineer',
+          location: locations(:acme_hq),
           status: :draft
         )
 
         # Attempt to destroy template
-        expect { template.destroy! }.to raise_error(ActiveRecord::DeleteRestrictionError)
+        expect { template.destroy! }.to raise_error(ActiveRecord::RecordNotDestroyed)
 
         # Verify template still exists
         expect(PositionTemplate.exists?(template.id)).to be true

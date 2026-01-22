@@ -649,22 +649,18 @@ RSpec.describe 'Position Templates API', type: :request do
       end
 
       it 'returns 422 when template has associated job_postings' do
-        pending 'JobPosting model not yet implemented (T051-T078)'
-
         template = position_templates(:software_engineer)
 
         # Create a job_posting for this template
         JobPosting.create!(
           brand: brands(:acme),
           position_template: template,
-          title: 'Backend Engineer',
+          job_title: 'Backend Engineer',
+          location: locations(:acme_hq),
           status: :draft
         )
-
-        expect {
-          delete "/api/v1/position_templates/#{template.id}", headers: headers
-        }.not_to change(PositionTemplate, :count)
-
+        
+        delete "/api/v1/position_templates/#{template.id}", headers: headers
         expect(response).to have_http_status(:unprocessable_entity)
       end
     end

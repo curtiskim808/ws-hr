@@ -14,6 +14,7 @@ module Api
       # Catches common exceptions and returns standardized JSON error responses
       rescue_from ActiveRecord::RecordNotFound, with: :not_found
       rescue_from ActiveRecord::RecordInvalid, with: :unprocessable_entity
+      rescue_from ActiveRecord::RecordNotDestroyed, with: :unprocessable_entity
       rescue_from ActionController::ParameterMissing, with: :bad_request
 
       private
