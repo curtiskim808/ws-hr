@@ -1,0 +1,7 @@
+# asdf tool versions
+# This file is used by asdf to automatically install and use the correct versions
+# See: https://asdf-vm.com/
+
+ruby 3.4.1
+postgres 15.5
+redis 7.2.4

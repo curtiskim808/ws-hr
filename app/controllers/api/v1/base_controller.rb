@@ -16,7 +16,7 @@ module Api
     class BaseController < ActionController::API
       # Set response format to JSON for all API endpoints
       before_action :set_json_format
-      
+
       # AUTHENTICATION
       # Uses Devise's authenticate_user! method provided by devise-jwt
       # This validates the JWT token from the Authorization header
@@ -48,22 +48,22 @@ module Api
       # WHY: Devise's authenticate_user! may not return proper JSON in API-only mode
       def authenticate_api_user!
         # Check if Authorization header is present (try multiple ways)
-        auth_header = request.headers['Authorization'] || request.authorization
-        if auth_header.nil? || !auth_header.to_s.start_with?('Bearer ')
+        auth_header = request.headers["Authorization"] || request.authorization
+        if auth_header.nil? || !auth_header.to_s.start_with?("Bearer ")
           render json: { error: "Unauthorized" }, status: :unauthorized
           return false  # Halt the before_action chain
         end
-        
+
         # Extract token from header
-        token = auth_header.to_s.sub(/^Bearer /i, '').strip
-        
+        token = auth_header.to_s.sub(/^Bearer /i, "").strip
+
         # If token is empty or explicitly "invalid_token", fail authentication immediately
         # This catches the test case where invalid_token is used
-        if token.blank? || token == 'invalid_token'
+        if token.blank? || token == "invalid_token"
           render json: { error: "Unauthorized" }, status: :unauthorized
           return false  # Halt the before_action chain
         end
-        
+
         # Use Devise's authenticate_user! method to validate token
         # This will raise an exception if authentication fails
         begin
@@ -73,12 +73,12 @@ module Api
           render json: { error: "Unauthorized" }, status: :unauthorized
           return false  # Halt the before_action chain
         end
-        
+
         # Double-check: If authentication failed (current_user is nil), return 401 JSON
         # This handles cases where authenticate_user! doesn't raise an exception
         unless user_signed_in? && current_user.present?
           render json: { error: "Unauthorized" }, status: :unauthorized
-          return false  # Halt the before_action chain
+          false  # Halt the before_action chain
         end
       end
 

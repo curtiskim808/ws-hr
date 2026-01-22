@@ -22,6 +22,10 @@ require 'rails_helper'
 RSpec.describe 'Application Notification Callbacks', type: :model do
   include ActiveJob::TestHelper
 
+  # Load fixtures
+  fixtures :brands, :users, :locations, :location_assignments, :position_templates,
+           :hiring_processes, :hiring_stages, :job_postings, :applicants, :applications
+
   # =============================================================================
   # SETUP
   # =============================================================================

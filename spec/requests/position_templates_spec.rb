@@ -214,6 +214,39 @@ RSpec.describe 'Position Templates API', type: :request do
     end
 
     # -------------------------------------------------------------------------
+    # PAGINATION TESTS
+    # -------------------------------------------------------------------------
+    # PURPOSE: Verify page[number] and page[size] behavior + meta payload
+
+    context 'with pagination parameters' do
+      let(:headers) { auth_headers(users(:acme_admin)) }
+      let(:total_count) { PositionTemplate.unscoped_by_brand.where(brand: brands(:acme)).count }
+
+      it 'returns paginated results with pagination metadata' do
+        get '/api/v1/position_templates', params: { page: { number: 2, size: 2 } }, headers: headers
+        expect(response).to have_http_status(:ok)
+
+        json = JSON.parse(response.body)
+        meta = json.dig('meta', 'pagination')
+
+        expect(json['data'].length).to eq(2)
+        expect(meta['current_page']).to eq(2)
+        expect(meta['per_page']).to eq(2)
+        expect(meta['total_count']).to eq(total_count)
+        expect(meta['total_pages']).to eq((total_count.to_f / 2).ceil)
+      end
+
+      it 'caps page size at 100' do
+        get '/api/v1/position_templates', params: { page: { number: 1, size: 200 } }, headers: headers
+
+        expect(response).to have_http_status(:ok)
+
+        json = JSON.parse(response.body)
+        expect(json.dig('meta', 'pagination', 'per_page')).to eq(100)
+      end
+    end
+
+    # -------------------------------------------------------------------------
     # AUTHORIZATION TESTS
     # -------------------------------------------------------------------------
     # PURPOSE: Verify all authenticated users can list templates
@@ -487,8 +520,8 @@ RSpec.describe 'Position Templates API', type: :request do
         # When position_template is empty, params.require might raise ParameterMissing
         # which returns 400. For this test, we'll accept either 400 or 422 as valid
         # since both indicate the request was invalid
-        expect([400, 422]).to include(response.status)
-        
+        expect([ 400, 422 ]).to include(response.status)
+
         if response.status == 422
           json = JSON.parse(response.body)
           # Should include multiple validation errors

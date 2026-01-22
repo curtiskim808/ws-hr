@@ -113,7 +113,7 @@ class CreateApplicants < ActiveRecord::Migration[8.0]
     #   Brand A: john@example.com (allowed)
     #   Brand A: john@example.com (rejected - duplicate)
     #   Brand B: john@example.com (allowed - different brand)
-    add_index :applicants, [:brand_id, :email],
+    add_index :applicants, [ :brand_id, :email ],
               unique: true,
               name: 'index_applicants_on_brand_and_email'
 
@@ -127,7 +127,7 @@ class CreateApplicants < ActiveRecord::Migration[8.0]
     #
     # EXAMPLE QUERY:
     #   Applicant.where(brand_id: 1).order(created_at: :desc).limit(10)
-    add_index :applicants, [:brand_id, :created_at],
+    add_index :applicants, [ :brand_id, :created_at ],
               name: 'index_applicants_on_brand_and_created_at'
   end
 end

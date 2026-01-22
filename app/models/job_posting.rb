@@ -76,6 +76,8 @@ class JobPosting < ApplicationRecord
   # PURPOSE: Define status enum values for AASM
   # WHY: AASM with enum: true requires explicit enum definition in Rails 8
   # VALUES: draft (0), published (1), link_only (2), unpublished (3)
+  # RAILS 8: Must declare attribute type explicitly before enum
+  attribute :status, :integer, default: 0
   enum :status, { draft: 0, published: 1, link_only: 2, unpublished: 3 }, prefix: false
 
   # =============================================================================
@@ -145,7 +147,7 @@ class JobPosting < ApplicationRecord
     #   posting.status          # => "published"
     #   posting.published_at    # => 2026-01-21 10:30:00 UTC
     event :publish, after: :record_published_at do
-      transitions from: [:draft, :link_only], to: :published,
+      transitions from: [ :draft, :link_only ], to: :published,
                   guard: :has_hiring_process?
     end
 
@@ -161,7 +163,7 @@ class JobPosting < ApplicationRecord
     #   posting.status            # => "unpublished"
     #   posting.unpublished_at    # => 2026-01-21 10:30:00 UTC
     event :unpublish, after: :record_unpublished_at do
-      transitions from: [:published, :link_only], to: :unpublished
+      transitions from: [ :published, :link_only ], to: :unpublished
     end
 
     # EVENT: make_link_only!
@@ -192,7 +194,7 @@ class JobPosting < ApplicationRecord
   # WHY: Applications need a workflow to follow
   # WHEN: Only enforced when status is 'published'
   # GUARD: Used in AASM publish! event guard
-  validates :hiring_process, presence: { message: 'must be set before publishing' },
+  validates :hiring_process, presence: { message: "must be set before publishing" },
                             if: :published?
 
   # =============================================================================

@@ -77,9 +77,8 @@ class CreateHiringStages < ActiveRecord::Migration[8.0]
     # QUERY: SELECT * FROM hiring_stages WHERE hiring_process_id = ? ORDER BY position
     # UNIQUENESS: Ensure no duplicate positions within a process
     # PERFORMANCE: O(log n) lookup, prevents duplicate positions
-    add_index :hiring_stages, [:hiring_process_id, :position],
+    add_index :hiring_stages, [ :hiring_process_id, :position ],
               unique: true,
               name: 'index_hiring_stages_on_process_and_position'
   end
 end
-

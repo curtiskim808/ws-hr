@@ -7,6 +7,6 @@ class CreateLocationAssignments < ActiveRecord::Migration[8.0]
       t.timestamps
     end
 
-    add_index :location_assignments, [:user_id, :location_id], unique: true
+    add_index :location_assignments, [ :user_id, :location_id ], unique: true
   end
 end

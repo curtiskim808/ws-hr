@@ -341,7 +341,7 @@ RSpec.describe 'Applications API', type: :request do
         json = JSON.parse(response.body)
         statuses = json['data'].map { |a| a['attributes']['status'] }.uniq
 
-        expect(statuses).to eq(['in_progress'])
+        expect(statuses).to eq([ 'in_progress' ])
       end
 
       it 'filters by hired status' do
@@ -350,7 +350,7 @@ RSpec.describe 'Applications API', type: :request do
         json = JSON.parse(response.body)
         statuses = json['data'].map { |a| a['attributes']['status'] }.uniq
 
-        expect(statuses).to eq(['hired'])
+        expect(statuses).to eq([ 'hired' ])
       end
     end
 
@@ -376,13 +376,13 @@ RSpec.describe 'Applications API', type: :request do
     # T149-T154: ENHANCED FILTERING, PAGINATION, AND SORTING TESTS
     # =============================================================================
 
-    # T149: Test JSON:API filter[status] parameter
-    context 'with JSON:API filter[status] parameter' do
+    # T149: Test status filter parameter
+    context 'with status filter parameter' do
       let(:headers) { auth_headers(users(:acme_admin)) }
 
-      it 'filters by status using filter[status]' do
+      it 'filters by status=in_progress' do
         get '/api/v1/applications',
-            params: { filter: { status: 'in_progress' } },
+            params: { status: 'in_progress' },
             headers: headers
 
         expect(response).to have_http_status(:ok)
@@ -390,12 +390,12 @@ RSpec.describe 'Applications API', type: :request do
         json = JSON.parse(response.body)
         statuses = json['data'].map { |a| a['attributes']['status'] }.uniq
 
-        expect(statuses).to eq(['in_progress'])
+        expect(statuses).to eq([ 'in_progress' ])
       end
 
-      it 'filters by hired status using filter[status]' do
+      it 'filters by status=hired' do
         get '/api/v1/applications',
-            params: { filter: { status: 'hired' } },
+            params: { status: 'hired' },
             headers: headers
 
         expect(response).to have_http_status(:ok)
@@ -403,18 +403,18 @@ RSpec.describe 'Applications API', type: :request do
         json = JSON.parse(response.body)
         statuses = json['data'].map { |a| a['attributes']['status'] }.uniq
 
-        expect(statuses).to eq(['hired'])
+        expect(statuses).to eq([ 'hired' ])
       end
     end
 
-    # T150: Test JSON:API filter[job_posting_id] parameter
-    context 'with JSON:API filter[job_posting_id] parameter' do
+    # T150: Test job_posting_id filter parameter
+    context 'with job_posting_id filter parameter' do
       let(:headers) { auth_headers(users(:acme_admin)) }
 
-      it 'filters by job_posting_id using filter[job_posting_id]' do
+      it 'filters by job_posting_id' do
         job_posting = job_postings(:backend_engineer_published)
         get '/api/v1/applications',
-            params: { filter: { job_posting_id: job_posting.id } },
+            params: { job_posting_id: job_posting.id },
             headers: headers
 
         expect(response).to have_http_status(:ok)
@@ -488,7 +488,7 @@ RSpec.describe 'Applications API', type: :request do
 
       it 'sorts by created_at ascending' do
         get '/api/v1/applications',
-            params: { sort: 'created_at' , direction: 'asc' },
+            params: { sort: 'created_at', direction: 'asc' },
             headers: headers
 
         expect(response).to have_http_status(:ok)
@@ -503,15 +503,15 @@ RSpec.describe 'Applications API', type: :request do
         get '/api/v1/applications',
             params: { sort: 'status' },
             headers: headers
-        
+
         expect(response).to have_http_status(:ok)
-        
+
         json = JSON.parse(response.body)
         statuses = json['data'].map { |a| a['attributes']['status'] }
         # Statuses should be sorted (in_progress comes before rejected, etc.)
         expect(statuses).to eq(statuses.sort)
       end
-      
+
       # sort by applicant_name ascending
       it 'sorts by applicant_name default to ascending' do
         get '/api/v1/applications',
@@ -532,7 +532,7 @@ RSpec.describe 'Applications API', type: :request do
             headers: headers
 
         expect(response).to have_http_status(:ok)
-        
+
         json = JSON.parse(response.body)
         names = json['data'].map { |a| a['attributes']['applicant_name'] }
         # Names should be sorted alphabetically in reverse order
@@ -595,15 +595,15 @@ RSpec.describe 'Applications API', type: :request do
         expect(response).to have_http_status(:ok)
 
         json = JSON.parse(response.body)
-        
+
         # Verify that we can access nested data without triggering additional queries
         # The serializer computes applicant_name and job_title from eager-loaded associations
         application_ids = json['data'].map { |a| a['id'].to_i }
-        
+
         # Load applications from database to verify associations are accessible
         # If eager loading worked, this should not trigger N+1 queries
         applications = Application.where(id: application_ids).includes(:applicant, :job_posting)
-        
+
         applications.each do |app|
           # These should not trigger additional queries because of eager loading
           expect(app.applicant).to be_present
@@ -798,13 +798,13 @@ RSpec.describe 'Applications API', type: :request do
           expect(response).to have_http_status(:ok)
 
           json = JSON.parse(response.body)
-          
+
           # Check that included section has stage transitions
           included = json['included'] || []
           stage_transitions = included.select { |item| item['type'] == 'application_stage_transition' }
-          
+
           expect(stage_transitions.count).to eq(2)
-          
+
           # Verify first transition details
           first_transition = stage_transitions.first
           expect(first_transition['attributes']).to include('transitioned_at')
@@ -812,7 +812,7 @@ RSpec.describe 'Applications API', type: :request do
           expect(first_transition['attributes']).to include('to_stage_name')
           expect(first_transition['attributes']).to include('transitioned_by_name')
           expect(first_transition['attributes']['notes']).to eq('Passed initial review')
-          
+
           # Verify second transition details
           second_transition = stage_transitions.last
           expect(second_transition['attributes']['notes']).to eq('Strong technical skills')
@@ -827,13 +827,13 @@ RSpec.describe 'Applications API', type: :request do
 
           json = JSON.parse(response.body)
           included = json['included'] || []
-          
+
           # Find transition with user info
-          transition_with_user = included.find { |item| 
-            item['type'] == 'application_stage_transition' && 
+          transition_with_user = included.find { |item|
+            item['type'] == 'application_stage_transition' &&
             item['relationships']['transitioned_by']
           }
-          
+
           expect(transition_with_user).to be_present
           expect(transition_with_user['attributes']['transitioned_by_name']).to be_present
         end
@@ -847,11 +847,11 @@ RSpec.describe 'Applications API', type: :request do
 
           json = JSON.parse(response.body)
           included = json['included'] || []
-          
+
           # Find stage transitions
           transitions = included.select { |item| item['type'] == 'application_stage_transition' }
           expect(transitions.count).to eq(2)
-          
+
           # Verify stage names are included
           transitions.each do |transition|
             expect(transition['attributes']['from_stage_name']).to be_present
@@ -869,7 +869,7 @@ RSpec.describe 'Applications API', type: :request do
           json = JSON.parse(response.body)
           included = json['included'] || []
           transitions = included.select { |item| item['type'] == 'application_stage_transition' }
-          
+
           # Verify transitions are in chronological order (oldest first)
           transition_times = transitions.map { |t| Time.parse(t['attributes']['transitioned_at']) }
           expect(transition_times).to eq(transition_times.sort)
@@ -887,7 +887,7 @@ RSpec.describe 'Applications API', type: :request do
           json = JSON.parse(response.body)
           included = json['included'] || []
           transitions = included.select { |item| item['type'] == 'application_stage_transition' }
-          
+
           expect(transitions).to be_empty
         end
       end

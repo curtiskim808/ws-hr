@@ -52,7 +52,7 @@ Rails.application.configure do
   # NOTE: API-only apps disable sessions by default, but devise-jwt needs sessions
   # to generate tokens via sign_in helper in tests
   config.middleware.use ActionDispatch::Cookies
-  config.middleware.use ActionDispatch::Session::CookieStore, key: '_ws_hr_app_session'
+  config.middleware.use ActionDispatch::Session::CookieStore, key: "_ws_hr_app_session"
 
   # Active Storage configuration
   config.active_storage.service = :test

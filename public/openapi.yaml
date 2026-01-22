@@ -1,0 +1,1253 @@
+openapi: 3.0.3
+info:
+  title: WS-HR Management System API
+  description: |
+    HR/Hiring Management System MVP API
+    
+    This API provides endpoints for managing the complete hiring workflow:
+    - Position Templates → Job Postings → Applications → Stage Management
+    
+    **Authentication**: JWT-based authentication via `/api/v1/auth/login`
+    
+    **Multi-tenant**: All data is automatically scoped by the authenticated user's brand
+    
+    **Future Development**:
+    - Phase 9 (US6): Availability Slots - Interviewers can set their availability
+    - Phase 10 (US7): Interview Scheduling - Schedule interviews with candidates
+    
+  version: 1.0.0
+  contact:
+    name: API Support
+    email: support@example.com
+
+servers:
+  - url: http://localhost:3000/api/v1
+    description: Development server
+  - url: https://api.example.com/api/v1
+    description: Production server
+
+tags:
+  - name: Authentication
+    description: User authentication and authorization
+  - name: Position Templates
+    description: Job position templates for creating job postings
+  - name: Job Postings
+    description: Published job listings
+  - name: Applicants
+    description: Candidate applicant records
+  - name: Applications
+    description: Job applications and workflow management
+  - name: Hiring Processes
+    description: Hiring workflow processes and stages
+
+paths:
+  /auth/login:
+    post:
+      tags:
+        - Authentication
+      summary: Login and receive JWT token
+      description: Authenticate user credentials and receive a JWT token for subsequent API requests
+      operationId: login
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: admin@acme.example.com
+                password:
+                  type: string
+                  format: password
+                  example: password123
+      responses:
+        '200':
+          description: Login successful
+          headers:
+            Authorization:
+              description: JWT token for authenticated requests
+              schema:
+                type: string
+                example: Bearer eyJhbGciOiJIUzI1NiJ9...
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Logged in successfully
+                  user:
+                    $ref: '#/components/schemas/User'
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/logout:
+    delete:
+      tags:
+        - Authentication
+      summary: Logout and revoke JWT token
+      description: Revoke the current JWT token
+      operationId: logout
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Logout successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Logged out successfully
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /position_templates:
+    get:
+      tags:
+        - Position Templates
+      summary: List all position templates
+      description: Returns all position templates for the authenticated user's brand
+      operationId: listPositionTemplates
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: filter[status]
+          in: query
+          description: Filter by status (draft, active)
+          schema:
+            type: string
+            enum: [draft, active]
+        - name: filter[category]
+          in: query
+          description: Filter by category
+          schema:
+            type: string
+        - name: page[number]
+          in: query
+          description: Page number
+          schema:
+            type: integer
+            default: 1
+        - name: page[size]
+          in: query
+          description: Items per page
+          schema:
+            type: integer
+            default: 25
+            maximum: 100
+      responses:
+        '200':
+          description: List of position templates
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PositionTemplateCollection'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    post:
+      tags:
+        - Position Templates
+      summary: Create a new position template
+      description: Create a new position template (Admin or Hiring Manager only)
+      operationId: createPositionTemplate
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - job_title
+                - category
+                - department
+              properties:
+                name:
+                  type: string
+                  example: Software Engineer Template
+                job_title:
+                  type: string
+                  example: Senior Software Engineer - Backend
+                category:
+                  type: string
+                  example: Engineering
+                department:
+                  type: string
+                  example: Product Development
+                description:
+                  type: string
+                  example: Build scalable APIs and services
+                requirements:
+                  type: string
+                  example: 5+ years Ruby on Rails experience
+                location_type:
+                  type: string
+                  enum: [onsite, remote, hybrid]
+                employment_type:
+                  type: string
+                  enum: [full_time, part_time, contract]
+                education_requirement:
+                  type: string
+                  enum: [high_school, associate, bachelor, master, doctorate]
+      responses:
+        '201':
+          description: Position template created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PositionTemplate'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden (Interviewer role)
+        '422':
+          description: Validation errors
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+
+  /position_templates/{id}:
+    get:
+      tags:
+        - Position Templates
+      summary: Get a position template
+      description: Returns a single position template by ID
+      operationId: getPositionTemplate
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Position template details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PositionTemplate'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+
+    patch:
+      tags:
+        - Position Templates
+      summary: Update a position template
+      description: Update an existing position template (Admin or Hiring Manager only)
+      operationId: updatePositionTemplate
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                job_title:
+                  type: string
+                category:
+                  type: string
+                department:
+                  type: string
+                description:
+                  type: string
+                requirements:
+                  type: string
+                status:
+                  type: string
+                  enum: [draft, active]
+      responses:
+        '200':
+          description: Position template updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PositionTemplate'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+        '422':
+          description: Validation errors
+
+    delete:
+      tags:
+        - Position Templates
+      summary: Delete a position template
+      description: Delete a position template (Admin only). Cannot delete if job postings exist.
+      operationId: deletePositionTemplate
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Position template deleted
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+        '422':
+          description: Cannot delete (has associated job postings)
+
+  /job_postings:
+    get:
+      tags:
+        - Job Postings
+      summary: List all job postings
+      description: Returns all job postings for the authenticated user's brand
+      operationId: listJobPostings
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: filter[status]
+          in: query
+          description: Filter by status (draft, published, link_only, unpublished)
+          schema:
+            type: string
+            enum: [draft, published, link_only, unpublished]
+        - name: filter[location_id]
+          in: query
+          description: Filter by location ID
+          schema:
+            type: integer
+        - name: include
+          in: query
+          description: Include related resources (comma-separated)
+          schema:
+            type: string
+            example: position_template,location
+        - name: page[number]
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: page[size]
+          in: query
+          schema:
+            type: integer
+            default: 25
+            maximum: 100
+      responses:
+        '200':
+          description: List of job postings
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobPostingCollection'
+        '401':
+          description: Unauthorized
+
+    post:
+      tags:
+        - Job Postings
+      summary: Create a new job posting
+      description: Create a job posting from a position template (Admin or Hiring Manager only)
+      operationId: createJobPosting
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - position_template_id
+                - location_id
+                - hiring_process_id
+                - job_title
+              properties:
+                position_template_id:
+                  type: integer
+                  example: 1
+                location_id:
+                  type: integer
+                  example: 1
+                hiring_process_id:
+                  type: integer
+                  example: 1
+                job_title:
+                  type: string
+                  example: Backend Engineer - Payments Team
+                description:
+                  type: string
+                requirements:
+                  type: string
+      responses:
+        '201':
+          description: Job posting created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobPosting'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '422':
+          description: Validation errors
+
+  /job_postings/{id}:
+    get:
+      tags:
+        - Job Postings
+      summary: Get a job posting
+      description: Returns a single job posting by ID
+      operationId: getJobPosting
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: include
+          in: query
+          description: Include related resources
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Job posting details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobPosting'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+
+    patch:
+      tags:
+        - Job Postings
+      summary: Update a job posting
+      description: Update a job posting or change its status (publish/unpublish)
+      operationId: updateJobPosting
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                job_title:
+                  type: string
+                description:
+                  type: string
+                requirements:
+                  type: string
+                status:
+                  type: string
+                  enum: [draft, published, link_only, unpublished]
+                  description: Changing status triggers AASM state transitions
+      responses:
+        '200':
+          description: Job posting updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobPosting'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+        '422':
+          description: Validation errors or invalid state transition
+
+    delete:
+      tags:
+        - Job Postings
+      summary: Delete a job posting
+      description: Delete a job posting (Admin only)
+      operationId: deleteJobPosting
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Job posting deleted
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+
+  /applicants:
+    get:
+      tags:
+        - Applicants
+      summary: List all applicants
+      description: Returns all applicants for the authenticated user's brand
+      operationId: listApplicants
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: filter[source]
+          in: query
+          description: Filter by source
+          schema:
+            type: string
+        - name: filter[flagged]
+          in: query
+          description: Filter flagged applicants
+          schema:
+            type: boolean
+        - name: page[number]
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: page[size]
+          in: query
+          schema:
+            type: integer
+            default: 25
+      responses:
+        '200':
+          description: List of applicants
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApplicantCollection'
+        '401':
+          description: Unauthorized
+
+    post:
+      tags:
+        - Applicants
+      summary: Create an applicant
+      description: Create an applicant manually (Admin or Hiring Manager only)
+      operationId: createApplicant
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - first_name
+                - last_name
+                - email
+              properties:
+                first_name:
+                  type: string
+                  example: John
+                last_name:
+                  type: string
+                  example: Doe
+                email:
+                  type: string
+                  format: email
+                  example: john@example.com
+                phone:
+                  type: string
+                  example: +1-555-0100
+                preferred_language:
+                  type: string
+                  default: en
+                source:
+                  type: string
+                  example: linkedin
+      responses:
+        '201':
+          description: Applicant created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Applicant'
+        '401':
+          description: Unauthorized
+        '422':
+          description: Validation errors
+
+  /applicants/{id}:
+    get:
+      tags:
+        - Applicants
+      summary: Get an applicant
+      description: Returns a single applicant by ID
+      operationId: getApplicant
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: include
+          in: query
+          description: Include related resources (applications)
+          schema:
+            type: string
+            example: applications
+      responses:
+        '200':
+          description: Applicant details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Applicant'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+
+    patch:
+      tags:
+        - Applicants
+      summary: Update an applicant
+      description: Update applicant information (Admin or Hiring Manager only)
+      operationId: updateApplicant
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                first_name:
+                  type: string
+                last_name:
+                  type: string
+                phone:
+                  type: string
+                flagged:
+                  type: boolean
+                flag_reason:
+                  type: string
+      responses:
+        '200':
+          description: Applicant updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Applicant'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+        '422':
+          description: Validation errors
+
+  /applications:
+    get:
+      tags:
+        - Applications
+      summary: List all applications
+      description: Returns all applications for the authenticated user's brand with filtering, pagination, and sorting
+      operationId: listApplications
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: filter[status]
+          in: query
+          description: Filter by status (in_progress, hired, rejected, archived)
+          schema:
+            type: string
+            enum: [in_progress, hired, rejected, archived]
+        - name: filter[job_posting_id]
+          in: query
+          description: Filter by job posting ID
+          schema:
+            type: integer
+        - name: filter[location_id]
+          in: query
+          description: Filter by location (via job posting)
+          schema:
+            type: integer
+        - name: sort
+          in: query
+          description: Sort field (created_at, status, applicant_name)
+          schema:
+            type: string
+            enum: [created_at, -created_at, status, applicant_name]
+        - name: include
+          in: query
+          description: Include related resources
+          schema:
+            type: string
+            example: applicant,job_posting,stage_transitions
+        - name: page[number]
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: page[size]
+          in: query
+          schema:
+            type: integer
+            default: 25
+            maximum: 100
+      responses:
+        '200':
+          description: List of applications
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApplicationCollection'
+        '401':
+          description: Unauthorized
+
+    post:
+      tags:
+        - Applications
+      summary: Submit a job application
+      description: Public endpoint for submitting job applications. Creates applicant if needed, then creates application.
+      operationId: createApplication
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - job_posting_id
+                - applicant
+              properties:
+                job_posting_id:
+                  type: integer
+                  example: 1
+                applicant:
+                  type: object
+                  required:
+                    - first_name
+                    - last_name
+                    - email
+                  properties:
+                    first_name:
+                      type: string
+                      example: John
+                    last_name:
+                      type: string
+                      example: Doe
+                    email:
+                      type: string
+                      format: email
+                      example: john@example.com
+                    phone:
+                      type: string
+                      example: +1-555-0100
+                    preferred_language:
+                      type: string
+                      default: en
+                    source:
+                      type: string
+                      example: linkedin
+                notes:
+                  type: string
+                  example: Interested in remote work
+      responses:
+        '201':
+          description: Application submitted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Application'
+        '422':
+          description: Validation errors (duplicate application, invalid data)
+
+  /applications/{id}:
+    get:
+      tags:
+        - Applications
+      summary: Get an application
+      description: Returns a single application with complete stage transition history
+      operationId: getApplication
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: include
+          in: query
+          description: Include related resources
+          schema:
+            type: string
+            example: applicant,job_posting,stage_transitions,current_stage
+      responses:
+        '200':
+          description: Application details with stage transition history
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Application'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not found
+
+    patch:
+      tags:
+        - Applications
+      summary: Update an application or perform workflow action
+      description: Update application notes or perform workflow actions (hire, reject, advance_stage)
+      operationId: updateApplication
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - type: object
+                  properties:
+                    action_type:
+                      type: string
+                      enum: [hire]
+                  required:
+                    - action_type
+                - type: object
+                  properties:
+                    action_type:
+                      type: string
+                      enum: [reject]
+                    rejection_reason:
+                      type: string
+                  required:
+                    - action_type
+                - type: object
+                  properties:
+                    action_type:
+                      type: string
+                      enum: [advance_stage]
+                    stage_id:
+                      type: integer
+                    notes:
+                      type: string
+                  required:
+                    - action_type
+                    - stage_id
+                - type: object
+                  properties:
+                    notes:
+                      type: string
+      responses:
+        '200':
+          description: Application updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Application'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+        '422':
+          description: Validation errors or invalid state transition
+
+    delete:
+      tags:
+        - Applications
+      summary: Archive an application
+      description: Archive an application (Admin or Hiring Manager only)
+      operationId: archiveApplication
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Application archived
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token obtained from /auth/login endpoint
+
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        email:
+          type: string
+          format: email
+        first_name:
+          type: string
+        last_name:
+          type: string
+        role:
+          type: string
+          enum: [super_admin, admin, hiring_manager, interviewer]
+        brand_id:
+          type: integer
+
+    PositionTemplate:
+      type: object
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+          example: position_template
+        attributes:
+          type: object
+          properties:
+            name:
+              type: string
+            job_title:
+              type: string
+            category:
+              type: string
+            department:
+              type: string
+            description:
+              type: string
+            requirements:
+              type: string
+            location_type:
+              type: string
+              enum: [onsite, remote, hybrid]
+            employment_type:
+              type: string
+              enum: [full_time, part_time, contract]
+            education_requirement:
+              type: string
+              enum: [high_school, associate, bachelor, master, doctorate]
+            status:
+              type: string
+              enum: [draft, active]
+            created_at:
+              type: string
+              format: date-time
+            updated_at:
+              type: string
+              format: date-time
+
+    PositionTemplateCollection:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/PositionTemplate'
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
+
+    JobPosting:
+      type: object
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+          example: job_posting
+        attributes:
+          type: object
+          properties:
+            job_title:
+              type: string
+            description:
+              type: string
+            requirements:
+              type: string
+            status:
+              type: string
+              enum: [draft, published, link_only, unpublished]
+            published_at:
+              type: string
+              format: date-time
+              nullable: true
+            created_at:
+              type: string
+              format: date-time
+            updated_at:
+              type: string
+              format: date-time
+        relationships:
+          type: object
+          properties:
+            position_template:
+              type: object
+            location:
+              type: object
+            hiring_process:
+              type: object
+
+    JobPostingCollection:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/JobPosting'
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
+
+    Applicant:
+      type: object
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+          example: applicant
+        attributes:
+          type: object
+          properties:
+            first_name:
+              type: string
+            last_name:
+              type: string
+            full_name:
+              type: string
+            email:
+              type: string
+              format: email
+            phone:
+              type: string
+            preferred_language:
+              type: string
+            source:
+              type: string
+            flagged:
+              type: boolean
+            flag_reason:
+              type: string
+              nullable: true
+            created_at:
+              type: string
+              format: date-time
+
+    ApplicantCollection:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Applicant'
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
+
+    Application:
+      type: object
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+          example: application
+        attributes:
+          type: object
+          properties:
+            status:
+              type: string
+              enum: [in_progress, hired, rejected, archived]
+            applied_at:
+              type: string
+              format: date-time
+            hired_at:
+              type: string
+              format: date-time
+              nullable: true
+            rejected_at:
+              type: string
+              format: date-time
+              nullable: true
+            rejection_reason:
+              type: string
+              nullable: true
+            notes:
+              type: string
+              nullable: true
+            current_stage_name:
+              type: string
+              nullable: true
+            applicant_name:
+              type: string
+            job_title:
+              type: string
+            created_at:
+              type: string
+              format: date-time
+        relationships:
+          type: object
+          properties:
+            applicant:
+              type: object
+            job_posting:
+              type: object
+            current_stage:
+              type: object
+            stage_transitions:
+              type: object
+
+    ApplicationCollection:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Application'
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
+
+    ApplicationStageTransition:
+      type: object
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+          example: application_stage_transition
+        attributes:
+          type: object
+          properties:
+            transitioned_at:
+              type: string
+              format: date-time
+            from_stage_name:
+              type: string
+              nullable: true
+            to_stage_name:
+              type: string
+            transitioned_by_name:
+              type: string
+              nullable: true
+            notes:
+              type: string
+              nullable: true
+            stage_change_summary:
+              type: string
+
+    PaginationMeta:
+      type: object
+      properties:
+        pagination:
+          type: object
+          properties:
+            current_page:
+              type: integer
+            per_page:
+              type: integer
+            total_pages:
+              type: integer
+            total_count:
+              type: integer
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+        errors:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
+
+    ValidationError:
+      type: object
+      properties:
+        errors:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string

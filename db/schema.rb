@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_01_21_115111) do
+ActiveRecord::Schema[8.0].define(version: 2026_01_21_205648) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -145,6 +145,8 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_21_115111) do
   create_table "job_postings", force: :cascade do |t|
     t.bigint "brand_id", null: false
     t.bigint "position_template_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
     t.bigint "location_id", null: false
     t.bigint "hiring_process_id", null: false
     t.string "job_title", null: false
@@ -154,8 +156,6 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_21_115111) do
     t.datetime "published_at"
     t.datetime "unpublished_at"
     t.datetime "closed_at"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
     t.index ["brand_id", "location_id"], name: "index_job_postings_on_brand_and_location"
     t.index ["brand_id", "published_at"], name: "index_job_postings_on_brand_and_published_at"
     t.index ["brand_id", "status"], name: "index_job_postings_on_brand_and_status"

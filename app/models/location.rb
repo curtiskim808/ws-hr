@@ -12,6 +12,6 @@ class Location < ApplicationRecord
   scope :for_brand, ->(brand) { where(brand_id: brand.id) }
 
   def full_address
-    [address, city, state, postal_code, country].compact.join(", ")
+    [ address, city, state, postal_code, country ].compact.join(", ")
   end
 end

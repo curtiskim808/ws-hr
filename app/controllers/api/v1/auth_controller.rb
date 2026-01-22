@@ -23,7 +23,7 @@ module Api
       # IMPORTANT: Skip authentication for login endpoint
       # WHY: Users can't be authenticated before they login!
       # SECURITY: Still validates email/password via Devise
-      skip_before_action :authenticate_api_user!, only: [:login]
+      skip_before_action :authenticate_api_user!, only: [ :login ]
 
       # LOGIN ENDPOINT
       # POST /api/v1/auth/login

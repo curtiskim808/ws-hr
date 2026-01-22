@@ -32,11 +32,11 @@ module Api
 
       # Skip authentication for public application submission
       # This allows candidates to apply for jobs without an account
-      skip_before_action :authenticate_api_user!, only: [:create]
+      skip_before_action :authenticate_api_user!, only: [ :create ]
 
       # CALLBACKS
-      before_action :set_application, only: [:show, :update, :destroy]
-      before_action :authorize_manage_applications!, only: [:update, :destroy]
+      before_action :set_application, only: [ :show, :update, :destroy ]
+      before_action :authorize_manage_applications!, only: [ :update, :destroy ]
 
       # INDEX - List all applications with filtering, pagination, and sorting
       # GET /api/v1/applications
@@ -44,18 +44,15 @@ module Api
       # T143-T148: Enhanced filtering, pagination, and sorting
       # T153: Interviewer role filtering (only see applications with assigned interviews)
       #
-      # JSON:API QUERY PARAMETERS:
-      # - filter[status]: Filter by status (in_progress, hired, rejected, archived)
-      # - filter[job_posting_id]: Filter by job posting ID
-      # - filter[location_id]: Filter by location (via job_posting) - T145
-      # - page[number]: Page number (default: 1) - T146
-      # - page[size]: Items per page (default: 25, max: 100) - T146
-      # - sort: Sort order (created_at, -created_at, status, applicant_name) - T147
-      #
-      # LEGACY PARAMETERS (for backward compatibility):
-      # - status: Alias for filter[status]
-      # - job_posting_id: Alias for filter[job_posting_id]
+      # QUERY PARAMETERS:
+      # - status: Filter by status (in_progress, hired, rejected, archived)
+      # - job_posting_id: Filter by job posting ID
+      # - location_id: Filter by location (via job_posting)
       # - applicant_id: Filter by applicant ID
+      # - page[number]: Page number (default: 1)
+      # - page[size]: Items per page (default: 25, max: 100)
+      # - sort: Sort field (created_at, applied_at, status, applicant_name)
+      # - direction: Sort direction (asc, desc)
       #
       # RESPONSE: JSON:API formatted array with pagination meta
       # BRAND SCOPING: Automatic via BrandScoped concern
@@ -78,28 +75,16 @@ module Api
           # applications = applications.joins(:interviews).where(interviews: { interviewer_id: current_user.id })
         end
 
-        # T143: Filter by status (JSON:API format)
-        if params.dig(:filter, :status).present?
-          applications = applications.by_status(params[:filter][:status])
-        elsif params[:status].present?
-          # Legacy support
-          applications = applications.by_status(params[:status])
-        end
+        # Filter by status
+        applications = applications.by_status(params[:status]) if params[:status].present?
 
-        # T144: Filter by job_posting_id (JSON:API format)
-        if params.dig(:filter, :job_posting_id).present?
-          applications = applications.where(job_posting_id: params[:filter][:job_posting_id])
-        elsif params[:job_posting_id].present?
-          # Legacy support
-          applications = applications.where(job_posting_id: params[:job_posting_id])
-        end
+        # Filter by job_posting_id
+        applications = applications.where(job_posting_id: params[:job_posting_id]) if params[:job_posting_id].present?
 
-        # T145: Filter by location (via job_posting)
-        if params.dig(:filter, :location_id).present?
-          applications = applications.for_location(params[:filter][:location_id])
-        end
+        # Filter by location (via job_posting)
+        applications = applications.for_location(params[:location_id]) if params[:location_id].present?
 
-        # Legacy applicant_id filter
+        # Filter by applicant_id
         applications = applications.where(applicant_id: params[:applicant_id]) if params[:applicant_id].present?
 
         # T147: Apply sorting
@@ -121,7 +106,7 @@ module Api
       def show
         render json: ApplicationSerializer.new(
           @application,
-          include: [:applicant, :job_posting, :current_stage, :stage_transitions]
+          include: [ :applicant, :job_posting, :current_stage, :stage_transitions ]
         ).serializable_hash
       end
 
@@ -179,11 +164,11 @@ module Api
       # ERROR: 422 Unprocessable Entity with validation errors
       def update
         case params[:action_type]
-        when 'hire'
+        when "hire"
           @application.hire!(current_user)
-        when 'reject'
+        when "reject"
           @application.reject!(params[:rejection_reason], current_user)
-        when 'advance_stage'
+        when "advance_stage"
           stage = HiringStage.find(params[:stage_id])
           @application.advance_to_stage!(stage, current_user, params[:notes])
         else
@@ -225,7 +210,7 @@ module Api
 
         unless current_user.role_admin? || current_user.role_hiring_manager?
           render json: { error: "Forbidden" }, status: :forbidden
-          return false
+          false
         end
       end
 
@@ -267,7 +252,7 @@ module Api
       # Defaults to 25, max 100
       def page_size
         size = params.dig(:page, :size)&.to_i || 25
-        [size, 100].min  # Cap at 100 items per page
+        [ size, 100 ].min  # Cap at 100 items per page
       end
 
       # T147: Apply sorting to applications query
@@ -275,7 +260,7 @@ module Api
       # Default: -created_at (newest first)
       # def apply_sorting(applications)
       #   sort_param = params[:sort] || '-created_at'
-        
+
       #   case sort_param
       #   when 'created_at', '+created_at'
       #     applications.order(created_at: :asc)
@@ -301,8 +286,8 @@ module Api
       # end
 
       ALLOWED_SORT_FIELDS = %w[created_at applied_at status applicant_name].freeze
-      DEFAULT_SORT_FIELD = 'created_at'.freeze
-      DEFAULT_SORT_DIRECTION = 'desc'.freeze
+      DEFAULT_SORT_FIELD = "created_at".freeze
+      DEFAULT_SORT_DIRECTION = "desc".freeze
 
       # Apply sorting from query parameters
       # PARAMS:
@@ -319,18 +304,18 @@ module Api
         # Default direction: asc for status/applicant_name, desc for created_at/applied_at
         unless sort_direction.present?
           sort_direction = if %w[status applicant_name].include?(sort_field)
-                             'asc'
-                           else
+                             "asc"
+          else
                              DEFAULT_SORT_DIRECTION
-                           end
+          end
         end
 
         # Validate direction
         sort_direction = DEFAULT_SORT_DIRECTION unless %w[asc desc].include?(sort_direction.downcase)
         # Special handling for applicant_name (requires join)
-        if sort_field == 'applicant_name'
+        if sort_field == "applicant_name"
           scope.joins(:applicant).order("applicants.first_name #{sort_direction}, applicants.last_name #{sort_direction}")
-        elsif sort_field == 'status'
+        elsif sort_field == "status"
           # Status is an enum (integer: in_progress=0, hired=1, rejected=2, archived=3)
           # Use CASE to map integer values to string names for alphabetical sorting
           case_sql = <<-SQL.squish

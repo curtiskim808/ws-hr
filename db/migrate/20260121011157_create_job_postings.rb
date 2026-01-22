@@ -126,7 +126,7 @@ class CreateJobPostings < ActiveRecord::Migration[8.0]
     # QUERY: SELECT * FROM job_postings WHERE brand_id = ? AND status = 'published'
     # USE CASE: List all published jobs on careers page
     # PERFORMANCE: O(log n) instead of O(n) table scan
-    add_index :job_postings, [:brand_id, :status],
+    add_index :job_postings, [ :brand_id, :status ],
               name: 'index_job_postings_on_brand_and_status'
 
     # COMPOSITE INDEX: brand_id + location_id
@@ -134,7 +134,7 @@ class CreateJobPostings < ActiveRecord::Migration[8.0]
     # QUERY: SELECT * FROM job_postings WHERE brand_id = ? AND location_id = ?
     # USE CASE: Filter jobs by location (SF, NY, Remote, etc.)
     # PERFORMANCE: O(log n) lookup
-    add_index :job_postings, [:brand_id, :location_id],
+    add_index :job_postings, [ :brand_id, :location_id ],
               name: 'index_job_postings_on_brand_and_location'
 
     # COMPOSITE INDEX: brand_id + published_at
@@ -142,7 +142,7 @@ class CreateJobPostings < ActiveRecord::Migration[8.0]
     # QUERY: SELECT * FROM job_postings WHERE brand_id = ? ORDER BY published_at DESC
     # USE CASE: Show newest jobs first on careers page
     # PERFORMANCE: O(log n) sorted retrieval
-    add_index :job_postings, [:brand_id, :published_at],
+    add_index :job_postings, [ :brand_id, :published_at ],
               name: 'index_job_postings_on_brand_and_published_at'
 
     # INDEX: position_template_id
@@ -155,4 +155,3 @@ class CreateJobPostings < ActiveRecord::Migration[8.0]
               name: 'index_job_postings_on_position_template_id'
   end
 end
-

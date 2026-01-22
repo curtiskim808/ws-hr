@@ -22,7 +22,7 @@ module Api
     class JobPostingsController < BaseController
       # T068: CALLBACKS
       # Set the job posting and authorize access before actions
-      before_action :set_job_posting, only: [:show, :update, :destroy]
+      before_action :set_job_posting, only: [ :show, :update, :destroy ]
       before_action :authorize_manage_postings!
 
       # INDEX - List all job postings
@@ -39,8 +39,13 @@ module Api
       #   GET /api/v1/job_postings?status=published&location_id=1
       def index
         postings = JobPosting.all
+
+        # Filter by status
         postings = postings.where(status: params[:status]) if params[:status].present?
+
+        # Filter by location_id
         postings = postings.at_location(params[:location_id]) if params[:location_id].present?
+
         postings = postings.recent # Order by most recent
 
         render json: JobPostingSerializer.new(postings).serializable_hash
@@ -120,7 +125,7 @@ module Api
       # SECURITY: Interviewers cannot create/edit postings
       def authorize_manage_postings!
         unless current_user.role_admin? || current_user.role_hiring_manager?
-          render json: { error: 'Unauthorized' }, status: :forbidden
+          render json: { error: "Unauthorized" }, status: :forbidden
         end
       end
 
@@ -166,11 +171,11 @@ module Api
         target_status = params[:job_posting][:status]
 
         case target_status
-        when 'published'
+        when "published"
           @job_posting.publish! unless @job_posting.published?
-        when 'unpublished'
+        when "unpublished"
           @job_posting.unpublish! unless @job_posting.unpublished?
-        when 'link_only'
+        when "link_only"
           @job_posting.make_link_only! unless @job_posting.link_only?
         end
         true # Return true to indicate success

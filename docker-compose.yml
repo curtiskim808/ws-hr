@@ -34,7 +34,10 @@ services:
       args:
         RAILS_ENV: development
         # Don't set BUNDLE_WITHOUT for development - this installs all gems including dev/test
-    command: bundle exec rails server -b 0.0.0.0
+    command: >
+      bash -c "bundle exec rails db:create db:migrate db:seed && bundle exec rails server -b 0.0.0.0"
+    env_file:
+      - .env
     environment:
       DB_HOST: db
       DB_USERNAME: ${DB_USERNAME:-postgres}
@@ -43,6 +46,8 @@ services:
       REDIS_URL: redis://redis:6379/0
       RAILS_ENV: ${RAILS_ENV:-development}
       RAILS_MASTER_KEY: ${RAILS_MASTER_KEY}
+      SECRET_KEY_BASE: ${SECRET_KEY_BASE}
+      DEVISE_JWT_SECRET_KEY: ${DEVISE_JWT_SECRET_KEY}
     ports:
       - "3000:3000"
     depends_on:
@@ -51,8 +56,8 @@ services:
       redis:
         condition: service_healthy
     volumes:
-      - .:/rails
-      - bundle_cache:/usr/local/bundle
+      - .:/app
+      - bundle_cache:/bundle
     stdin_open: true
     tty: true
 
@@ -64,6 +69,8 @@ services:
         RAILS_ENV: development
         # Don't set BUNDLE_WITHOUT for development - this installs all gems including dev/test
     command: bundle exec rake solid_queue:start
+    env_file:
+      - .env
     environment:
       DB_HOST: db
       DB_USERNAME: ${DB_USERNAME:-postgres}
@@ -72,6 +79,8 @@ services:
       REDIS_URL: redis://redis:6379/0
       RAILS_ENV: ${RAILS_ENV:-development}
       RAILS_MASTER_KEY: ${RAILS_MASTER_KEY}
+      SECRET_KEY_BASE: ${SECRET_KEY_BASE}
+      DEVISE_JWT_SECRET_KEY: ${DEVISE_JWT_SECRET_KEY}
       AWS_REGION: ${AWS_REGION:-us-east-1}
       AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
       AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
@@ -81,8 +90,10 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      web:
+        condition: service_started
     volumes:
-      - .:/rails
+      - .:/app
       - bundle_cache:/usr/local/bundle
 
 volumes:

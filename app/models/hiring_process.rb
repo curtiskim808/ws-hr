@@ -73,7 +73,7 @@ class HiringProcess < ApplicationRecord
   # SCOPE: Within brand (multi-tenant)
   # CONDITION: Only validate if is_default is true
   # EXAMPLE: Acme can have ONE default process, Globex can have a different ONE
-  validates :is_default, uniqueness: { scope: :brand_id, message: 'only one default process allowed per brand' },
+  validates :is_default, uniqueness: { scope: :brand_id, message: "only one default process allowed per brand" },
                          if: :is_default?
 
   # =============================================================================

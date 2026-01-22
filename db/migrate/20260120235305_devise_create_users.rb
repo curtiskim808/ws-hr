@@ -48,7 +48,7 @@ class DeviseCreateUsers < ActiveRecord::Migration[8.0]
     # add_index :users, :unlock_token,         unique: true
 
     # Custom indexes
-    add_index :users, [:brand_id, :email], unique: true
-    add_index :users, [:brand_id, :role]
+    add_index :users, [ :brand_id, :email ], unique: true
+    add_index :users, [ :brand_id, :role ]
   end
 end

@@ -148,7 +148,7 @@ class CreateApplications < ActiveRecord::Migration[8.0]
     # QUERY: SELECT * FROM applications WHERE brand_id = ? AND status = 'in_progress'
     # USE CASE: Dashboard showing all in-progress applications
     # PERFORMANCE: O(log n) instead of O(n) table scan
-    add_index :applications, [:brand_id, :status],
+    add_index :applications, [ :brand_id, :status ],
               name: 'index_applications_on_brand_and_status'
 
     # COMPOSITE INDEX: brand_id + job_posting_id
@@ -156,7 +156,7 @@ class CreateApplications < ActiveRecord::Migration[8.0]
     # QUERY: SELECT * FROM applications WHERE brand_id = ? AND job_posting_id = ?
     # USE CASE: View all applicants for "Backend Engineer" posting
     # PERFORMANCE: O(log n) lookup
-    add_index :applications, [:brand_id, :job_posting_id],
+    add_index :applications, [ :brand_id, :job_posting_id ],
               name: 'index_applications_on_brand_and_job_posting'
 
     # COMPOSITE INDEX: brand_id + applicant_id
@@ -164,7 +164,7 @@ class CreateApplications < ActiveRecord::Migration[8.0]
     # QUERY: SELECT * FROM applications WHERE brand_id = ? AND applicant_id = ?
     # USE CASE: View application history for John Doe
     # PERFORMANCE: O(log n) lookup
-    add_index :applications, [:brand_id, :applicant_id],
+    add_index :applications, [ :brand_id, :applicant_id ],
               name: 'index_applications_on_brand_and_applicant'
 
     # COMPOSITE INDEX: brand_id + created_at
@@ -172,7 +172,7 @@ class CreateApplications < ActiveRecord::Migration[8.0]
     # QUERY: SELECT * FROM applications WHERE brand_id = ? ORDER BY created_at DESC
     # USE CASE: Dashboard showing recent applications
     # PERFORMANCE: O(log n) sorted retrieval
-    add_index :applications, [:brand_id, :created_at],
+    add_index :applications, [ :brand_id, :created_at ],
               name: 'index_applications_on_brand_and_created_at'
 
     # COMPOSITE INDEX: applicant_id + job_posting_id (UNIQUE)
@@ -185,7 +185,7 @@ class CreateApplications < ActiveRecord::Migration[8.0]
     #   John Doe → "Backend Engineer" (allowed)
     #   John Doe → "Backend Engineer" (rejected - duplicate)
     #   John Doe → "Frontend Engineer" (allowed - different job)
-    add_index :applications, [:applicant_id, :job_posting_id],
+    add_index :applications, [ :applicant_id, :job_posting_id ],
               unique: true,
               name: 'index_applications_on_applicant_and_job_posting'
   end

@@ -71,7 +71,7 @@ class Applicant < ApplicationRecord
   # WHY: Prevent invalid emails from being saved
   validates :email, format: {
     with: URI::MailTo::EMAIL_REGEXP,
-    message: 'must be a valid email address'
+    message: "must be a valid email address"
   }
 
   # EMAIL UNIQUENESS VALIDATION (within brand)
@@ -84,7 +84,7 @@ class Applicant < ApplicationRecord
   #   Brand B: john@example.com (allowed - different brand)
   validates :email, uniqueness: {
     scope: :brand_id,
-    message: 'has already applied (duplicate applicant in this brand)'
+    message: "has already applied (duplicate applicant in this brand)"
   }
 
   # PHONE FORMAT VALIDATION (optional, only if present)
@@ -94,7 +94,7 @@ class Applicant < ApplicationRecord
   # OPTIONAL: Only validates if phone is present
   validates :phone, format: {
     with: /\A[\d\s\-\(\)\+\.]+\z/,
-    message: 'must be a valid phone number'
+    message: "must be a valid phone number"
   }, allow_blank: true
 
   # =============================================================================
@@ -180,12 +180,12 @@ class Applicant < ApplicationRecord
 
     # Validate content type
     unless resume.content_type.in?(%w[application/pdf application/msword application/vnd.openxmlformats-officedocument.wordprocessingml.document])
-      errors.add(:resume, 'must be a PDF, DOC, or DOCX file')
+      errors.add(:resume, "must be a PDF, DOC, or DOCX file")
     end
 
     # Validate file size (< 5MB)
     if resume.byte_size > 5.megabytes
-      errors.add(:resume, 'must be less than 5MB')
+      errors.add(:resume, "must be less than 5MB")
     end
   end
 end

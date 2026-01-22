@@ -24,8 +24,8 @@ module Api
       # CALLBACKS
       # Set the applicant before actions that need it
       # Authorize manage access for create/update operations
-      before_action :set_applicant, only: [:show, :update]
-      before_action :authorize_manage_applicants!, only: [:create, :update]
+      before_action :set_applicant, only: [ :show, :update ]
+      before_action :authorize_manage_applicants!, only: [ :create, :update ]
 
       # INDEX - List all applicants
       # GET /api/v1/applicants
@@ -43,7 +43,7 @@ module Api
         applicants = applicants.by_source(params[:source]) if params[:source].present?
 
         # Filter flagged applicants
-        applicants = applicants.flagged if params[:flagged] == 'true'
+        applicants = applicants.flagged if params[:flagged] == "true"
 
         render json: ApplicantSerializer.new(applicants).serializable_hash
       end
@@ -55,7 +55,7 @@ module Api
       def show
         render json: ApplicantSerializer.new(
           @applicant,
-          include: [:applications]
+          include: [ :applications ]
         ).serializable_hash
       end
 
@@ -105,7 +105,7 @@ module Api
 
         unless current_user.role_admin? || current_user.role_hiring_manager?
           render json: { error: "Forbidden" }, status: :forbidden
-          return false
+          false
         end
       end
 

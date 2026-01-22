@@ -4,7 +4,7 @@
 # Pagy is a fast, lightweight pagination library for Rails
 # See: https://github.com/ddnexus/pagy
 
-require 'pagy/extras/metadata'
+require "pagy/extras/metadata"
 
 # Default items per page
 Pagy::DEFAULT[:items] = 25
@@ -13,4 +13,4 @@ Pagy::DEFAULT[:items] = 25
 Pagy::DEFAULT[:max_items] = 100
 
 # Enable metadata for JSON:API responses
-Pagy::DEFAULT[:metadata] = [:count, :page, :items, :pages, :last, :from, :to, :prev, :next]
+Pagy::DEFAULT[:metadata] = [ :count, :page, :items, :pages, :last, :from, :to, :prev, :next ]

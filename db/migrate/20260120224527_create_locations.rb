@@ -14,7 +14,7 @@ class CreateLocations < ActiveRecord::Migration[8.0]
     end
 
     # Composite index for brand-scoped queries (performance optimization)
-    add_index :locations, [:brand_id, :name], name: 'index_locations_on_brand_and_name'
-    add_index :locations, [:brand_id, :city, :state], name: 'index_locations_on_brand_city_state'
+    add_index :locations, [ :brand_id, :name ], name: 'index_locations_on_brand_and_name'
+    add_index :locations, [ :brand_id, :city, :state ], name: 'index_locations_on_brand_city_state'
   end
 end

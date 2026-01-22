@@ -83,7 +83,7 @@ class HiringStage < ApplicationRecord
   # BUSINESS RULE: Can't have two stages at position 2 in same process
   # SCOPE: Within hiring_process (each process has own sequence)
   # DATABASE: Enforced by unique composite index (hiring_process_id, position)
-  validates :position, uniqueness: { scope: :hiring_process_id, message: 'must be unique within hiring process' }
+  validates :position, uniqueness: { scope: :hiring_process_id, message: "must be unique within hiring process" }
 
   # NUMERICALITY: Position must be positive integer
   # BUSINESS RULE: Positions start at 1, not 0

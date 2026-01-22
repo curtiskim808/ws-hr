@@ -26,7 +26,7 @@ module RequestHelpers
     # The login endpoint accepts params in format: { email, password } or { auth: { email, password } }
     # We use the root-level format: { email, password }
     # Use as: :json to send JSON body instead of form data
-    post '/api/v1/auth/login', 
+    post '/api/v1/auth/login',
       params: {
         email: user.email,
         password: 'password123'  # All fixture users use this password
@@ -41,15 +41,15 @@ module RequestHelpers
     # Extract token from response headers
     # devise-jwt adds the token to the Authorization header after sign_in(user)
     # The header format is: "Authorization: Bearer <token>"
-    auth_header = response.headers['Authorization'] || 
+    auth_header = response.headers['Authorization'] ||
                   response.headers['authorization'] ||
                   response.get_header('Authorization')
-    
+
     if auth_header.blank?
       # Try to get it from the response object directly
       auth_header = response.headers.to_h.find { |k, _| k.downcase == 'authorization' }&.last
     end
-    
+
     if auth_header.blank?
       raise "Failed to get JWT token from login response. Status: #{response.status}, " \
             "Body: #{response.body}, Headers: #{response.headers.to_h.keys}"

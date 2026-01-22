@@ -67,17 +67,17 @@ class Application < ApplicationRecord
   # OPTIONAL: Can be null initially (before review starts)
   # RELATIONSHIP: belongs_to a HiringStage
   # BUSINESS RULE: current_stage must belong to this application's hiring_process
-  belongs_to :current_stage, class_name: 'HiringStage', optional: true
+  belongs_to :current_stage, class_name: "HiringStage", optional: true
 
   # HIRED BY: Which user made the hiring decision?
   # OPTIONAL: Only set when application is hired
   # RELATIONSHIP: belongs_to a User
-  belongs_to :hired_by, class_name: 'User', optional: true
+  belongs_to :hired_by, class_name: "User", optional: true
 
   # REJECTED BY: Which user made the rejection decision?
   # OPTIONAL: Only set when application is rejected
   # RELATIONSHIP: belongs_to a User
-  belongs_to :rejected_by, class_name: 'User', optional: true
+  belongs_to :rejected_by, class_name: "User", optional: true
 
   # =============================================================================
   # T100: STAGE TRANSITIONS ASSOCIATION
@@ -98,9 +98,10 @@ class Application < ApplicationRecord
   #     #<ApplicationStageTransition from: "Phone Screen", to: "Interview", transitioned_at: ...>
   #   ]
   has_many :stage_transitions,
-           class_name: 'ApplicationStageTransition',
+           class_name: "ApplicationStageTransition",
            dependent: :destroy,
-           inverse_of: :application
+           inverse_of: :application,
+           autosave: true
 
   # =============================================================================
   # ENUM: Status
@@ -108,6 +109,8 @@ class Application < ApplicationRecord
   # PURPOSE: Define status enum values for AASM
   # WHY: AASM with enum: true requires explicit enum definition in Rails 8
   # VALUES: in_progress (0), hired (1), rejected (2), archived (3)
+  # RAILS 8: Must declare attribute type explicitly before enum
+  attribute :status, :integer, default: 0
   enum :status, { in_progress: 0, hired: 1, rejected: 2, archived: 3 }, prefix: false
 
   # =============================================================================
@@ -161,16 +164,16 @@ class Application < ApplicationRecord
     # PURPOSE: Hire the applicant
     # FROM STATES: in_progress
     # TO STATE: hired
-    # CALLBACK: Sets hired_at timestamp
     # GUARD: Must be called via hire!(user) method which sets hired_by
     # GUARD: T157 - Cannot hire from rejected status
+    # NOTE: hired_at timestamp is set in hire! method before save
     #
     # EXAMPLE:
     #   application.hire!(current_user)
     #   application.status          # => "hired"
     #   application.hired_at        # => 2026-01-21 10:30:00 UTC
     #   application.hired_by        # => #<User id: 1>
-    event :hire, after: :record_hired_at do
+    event :hire do
       transitions from: :in_progress, to: :hired, guard: :can_hire?
     end
 
@@ -178,16 +181,16 @@ class Application < ApplicationRecord
     # PURPOSE: Reject the applicant
     # FROM STATES: in_progress
     # TO STATE: rejected
-    # CALLBACK: Sets rejected_at timestamp
     # GUARD: Must be called via reject!(reason, user) method
     # GUARD: T158 - Cannot reject from hired status
+    # NOTE: rejected_at timestamp is set in reject! method before save
     #
     # EXAMPLE:
     #   application.reject!("Not enough experience", current_user)
     #   application.status          # => "rejected"
     #   application.rejected_at     # => 2026-01-21 10:30:00 UTC
     #   application.rejection_reason # => "Not enough experience"
-    event :reject, after: :record_rejected_at do
+    event :reject do
       transitions from: :in_progress, to: :rejected, guard: :can_reject?
     end
 
@@ -195,14 +198,14 @@ class Application < ApplicationRecord
     # PURPOSE: Archive the application
     # FROM STATES: in_progress, hired, rejected
     # TO STATE: archived
-    # CALLBACK: Sets archived_at timestamp
+    # NOTE: archived_at timestamp is set automatically during archive transition
     #
     # EXAMPLE:
     #   application.archive!
     #   application.status     # => "archived"
     #   application.archived_at # => 2026-01-21 10:30:00 UTC
-    event :archive, after: :record_archived_at do
-      transitions from: [:in_progress, :hired, :rejected], to: :archived
+    event :archive do
+      transitions from: [ :in_progress, :hired, :rejected ], to: :archived
     end
   end
 
@@ -221,7 +224,7 @@ class Application < ApplicationRecord
   #   John Doe → "Frontend Engineer" (allowed - different job)
   validates :applicant_id, uniqueness: {
     scope: :job_posting_id,
-    message: 'has already applied to this job posting'
+    message: "has already applied to this job posting"
   }
 
   # APPLIED_AT VALIDATION
@@ -239,9 +242,11 @@ class Application < ApplicationRecord
   #   - user: User making the hiring decision
   # IMPLEMENTATION:
   #   - Set hired_by = user
-  #   - Call AASM hire event (sets hired_at, changes status to 'hired')
-  #   - Wrap in transaction for atomicity
+  #   - Set hired_at = Time.current
+  #   - Call AASM hire event (changes status to 'hired')
+  #   - save! wraps in transaction automatically
   # RAISES: AASM::InvalidTransition if already hired/rejected
+  # SIDE EFFECTS: Triggers after_commit :publish_hired_notification
   #
   # EXAMPLE:
   #   application.hire!(current_user)
@@ -251,15 +256,14 @@ class Application < ApplicationRecord
   #
   # WHY FAT MODEL:
   #   - Encapsulates business logic in model
-  #   - Ensures hired_by is always set when hiring
-  #   - Transaction ensures atomicity
+  #   - Ensures hired_by and hired_at are always set when hiring
   #   - Controller just calls this method (thin controller)
+  #   - Side effects (notifications) handled via after_commit callbacks
   def hire!(user)
-    transaction do
-      self.hired_by = user
-      aasm.fire(:hire) # Call AASM event (not self.hire! which would be recursive)
-      save!
-    end
+    self.hired_by = user
+    self.hired_at = Time.current
+    aasm.fire(:hire) # Call AASM event (not self.hire! which would be recursive)
+    save!
   end
 
   # METHOD: reject!(reason, user)
@@ -270,9 +274,11 @@ class Application < ApplicationRecord
   # IMPLEMENTATION:
   #   - Set rejection_reason = reason
   #   - Set rejected_by = user
-  #   - Call AASM reject event (sets rejected_at, changes status to 'rejected')
-  #   - Wrap in transaction for atomicity
+  #   - Set rejected_at = Time.current
+  #   - Call AASM reject event (changes status to 'rejected')
+  #   - save! wraps in transaction automatically
   # RAISES: AASM::InvalidTransition if already hired/rejected
+  # SIDE EFFECTS: Triggers after_commit :publish_rejected_notification
   #
   # EXAMPLE:
   #   application.reject!("Not enough experience", current_user)
@@ -282,15 +288,30 @@ class Application < ApplicationRecord
   #
   # WHY FAT MODEL:
   #   - Encapsulates business logic in model
-  #   - Ensures rejection_reason and rejected_by are always set
-  #   - Transaction ensures atomicity
+  #   - Ensures rejection_reason, rejected_by and rejected_at are always set
+  #   - Side effects (notifications) handled via after_commit callbacks
   def reject!(reason, user)
-    transaction do
-      self.rejection_reason = reason
-      self.rejected_by = user
-      aasm.fire(:reject) # Call AASM event (not self.reject! which would be recursive)
-      save!
-    end
+    self.rejection_reason = reason
+    self.rejected_by = user
+    self.rejected_at = Time.current
+    aasm.fire(:reject) # Call AASM event (not self.reject! which would be recursive)
+    save!
+  end
+
+  # METHOD: archive!
+  # PURPOSE: Archive the application
+  # FROM STATES: in_progress, hired, rejected
+  # TO STATE: archived
+  # NOTE: archived_at timestamp is set automatically during archive transition
+  #
+  # EXAMPLE:
+  #   application.archive!
+  #   application.status     # => "archived"
+  #   application.archived_at # => 2026-01-21 10:30:00 UTC
+  def archive!
+    self.archived_at = Time.current
+    aasm.fire(:archive) # Call AASM event (not self.archive! which would be recursive)
+    save!
   end
 
   # METHOD: advance_to_stage!(stage, user, notes)
@@ -301,11 +322,11 @@ class Application < ApplicationRecord
   #   - notes: Optional notes about why this transition happened
   # IMPLEMENTATION:
   #   - Validate stage belongs to this application's hiring_process
-  #   - Create ApplicationStageTransition record for audit trail (T101)
+  #   - Build ApplicationStageTransition record for audit trail (T101)
   #   - Update current_stage
-  #   - Save record
-  #   - Wrap in transaction for atomicity
+  #   - save! persists both parent and built child atomically
   # RAISES: ArgumentError if stage doesn't belong to hiring_process
+  # SIDE EFFECTS: Triggers after_commit :publish_stage_changed_notification
   #
   # EXAMPLE:
   #   application.current_stage # => #<HiringStage id: 1, name: "Application Review">
@@ -318,32 +339,29 @@ class Application < ApplicationRecord
   #   - Encapsulates stage advancement logic
   #   - Validates stage belongs to hiring_process
   #   - Creates audit trail (ApplicationStageTransition)
-  #   - Transaction ensures atomicity
-  #   - Triggers stage change notification (T104)
+  #   - Side effects (notifications) handled via after_commit callbacks
   def advance_to_stage!(stage, user = nil, notes = nil)
     # Validate stage belongs to this application's hiring_process
     unless stage.hiring_process_id == hiring_process_id
       raise ArgumentError, "Stage must belong to this application's hiring process"
     end
 
-    transaction do
-      # T101: Create ApplicationStageTransition record for audit trail
-      # BEFORE updating current_stage so we capture the from_stage
-      from_stage = current_stage
+    # T101: Build ApplicationStageTransition record for audit trail
+    # BEFORE updating current_stage so we capture the from_stage
+    from_stage = current_stage
 
-      # Create transition record
-      stage_transitions.create!(
-        from_stage: from_stage,
-        to_stage: stage,
-        transitioned_by: user,
-        transitioned_at: Time.current,
-        notes: notes
-      )
+    # Build transition record (will be saved with parent via autosave)
+    stage_transitions.build(
+      from_stage: from_stage,
+      to_stage: stage,
+      transitioned_by: user,
+      transitioned_at: Time.current,
+      notes: notes
+    )
 
-      # Update current_stage
-      self.current_stage = stage
-      save!
-    end
+    # Update current_stage and save (saves built transition atomically)
+    self.current_stage = stage
+    save!
   end
 
   # =============================================================================
@@ -435,7 +453,7 @@ class Application < ApplicationRecord
   #   - to_stage: Load the "to" stage for each transition
   #   - transitioned_by: Load the user who made the transition
   scope :with_transitions, -> {
-    includes(stage_transitions: [:from_stage, :to_stage, :transitioned_by])
+    includes(stage_transitions: [ :from_stage, :to_stage, :transitioned_by ])
   }
 
   # =============================================================================
@@ -479,25 +497,26 @@ class Application < ApplicationRecord
   #   - Encapsulates complex creation logic
   #   - Finds or creates applicant (prevents duplicates)
   #   - Sets up hiring_process and first stage automatically
-  #   - Transaction ensures atomicity
+  #   - Transaction ensures atomicity for multi-record creation
+  #   - Side effects (notifications) handled via after_commit callbacks
   #   - Public API for application submissions
   def self.create_from_form!(params)
     transaction do
       # Find or create applicant by email
-      applicant_params = params[:applicant] || params['applicant']
+      applicant_params = params[:applicant] || params["applicant"]
       applicant = Applicant.find_or_create_by!(
         brand_id: Current.brand.id,
-        email: applicant_params[:email] || applicant_params['email']
+        email: applicant_params[:email] || applicant_params["email"]
       ) do |a|
-        a.first_name = applicant_params[:first_name] || applicant_params['first_name']
-        a.last_name = applicant_params[:last_name] || applicant_params['last_name']
-        a.phone = applicant_params[:phone] || applicant_params['phone']
-        a.source = applicant_params[:source] || applicant_params['source']
-        a.preferred_language = applicant_params[:preferred_language] || applicant_params['preferred_language'] || 'en'
+        a.first_name = applicant_params[:first_name] || applicant_params["first_name"]
+        a.last_name = applicant_params[:last_name] || applicant_params["last_name"]
+        a.phone = applicant_params[:phone] || applicant_params["phone"]
+        a.source = applicant_params[:source] || applicant_params["source"]
+        a.preferred_language = applicant_params[:preferred_language] || applicant_params["preferred_language"] || "en"
       end
 
       # Find job posting
-      job_posting = JobPosting.find(params[:job_posting_id] || params['job_posting_id'])
+      job_posting = JobPosting.find(params[:job_posting_id] || params["job_posting_id"])
 
       # Create application
       application = create!(
@@ -507,7 +526,7 @@ class Application < ApplicationRecord
         hiring_process: job_posting.hiring_process,
         current_stage: job_posting.hiring_process.first_stage,
         applied_at: Time.current,
-        notes: params[:notes] || params['notes']
+        notes: params[:notes] || params["notes"]
       )
 
       application
@@ -586,35 +605,7 @@ class Application < ApplicationRecord
     in_progress?
   end
 
-  # =============================================================================
-  # PRIVATE METHODS - AASM CALLBACKS
-  # =============================================================================
-
   private
-
-  # PRIVATE METHOD: record_hired_at
-  # PURPOSE: Set hired_at timestamp when application is hired
-  # TRIGGER: after AASM hire event
-  # IMPLEMENTATION: Set hired_at to Time.current
-  def record_hired_at
-    update_column(:hired_at, Time.current)
-  end
-
-  # PRIVATE METHOD: record_rejected_at
-  # PURPOSE: Set rejected_at timestamp when application is rejected
-  # TRIGGER: after AASM reject event
-  # IMPLEMENTATION: Set rejected_at to Time.current
-  def record_rejected_at
-    update_column(:rejected_at, Time.current)
-  end
-
-  # PRIVATE METHOD: record_archived_at
-  # PURPOSE: Set archived_at timestamp when application is archived
-  # TRIGGER: after AASM archive event
-  # IMPLEMENTATION: Set archived_at to Time.current
-  def record_archived_at
-    update_column(:archived_at, Time.current)
-  end
 
   # =============================================================================
   # T127: PRIVATE METHODS - NOTIFICATION ENQUEUING
@@ -680,7 +671,7 @@ class Application < ApplicationRecord
   # RETURNS: Boolean true if previous_changes includes status → 'hired'
   # USE CASE: Conditional for publish_hired_notification callback
   def saved_change_to_hired_status?
-    saved_change_to_status? && status == 'hired'
+    saved_change_to_status? && status == "hired"
   end
 
   # PRIVATE METHOD: saved_change_to_rejected_status?
@@ -688,6 +679,6 @@ class Application < ApplicationRecord
   # RETURNS: Boolean true if previous_changes includes status → 'rejected'
   # USE CASE: Conditional for publish_rejected_notification callback
   def saved_change_to_rejected_status?
-    saved_change_to_status? && status == 'rejected'
+    saved_change_to_status? && status == "rejected"
   end
 end

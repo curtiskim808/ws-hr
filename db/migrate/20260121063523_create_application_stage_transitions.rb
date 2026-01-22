@@ -87,7 +87,7 @@ class CreateApplicationStageTransitions < ActiveRecord::Migration[8.0]
     # QUERY: SELECT * FROM application_stage_transitions WHERE application_id = ? ORDER BY transitioned_at
     # USE CASE: Show candidate's stage progression timeline
     # PERFORMANCE: O(log n) sorted retrieval
-    add_index :application_stage_transitions, [:application_id, :transitioned_at],
+    add_index :application_stage_transitions, [ :application_id, :transitioned_at ],
               name: 'index_app_stage_transitions_on_app_and_time'
   end
 end

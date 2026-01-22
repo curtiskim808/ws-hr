@@ -499,6 +499,7 @@ RSpec.describe Application, type: :model do
       it 'sets archived_at timestamp' do
         freeze_time do
           application.archive!
+          
           expect(application.archived_at).to be_within(1.second).of(Time.current)
         end
       end
@@ -582,7 +583,7 @@ RSpec.describe Application, type: :model do
   describe 'brand scoping' do
     it 'only returns applications from current brand' do
       applications = Application.all
-      expect(applications.pluck(:brand_id).uniq).to eq([brands(:acme).id])
+      expect(applications.pluck(:brand_id).uniq).to eq([ brands(:acme).id ])
     end
 
     it 'does not return applications from other brands' do
@@ -598,7 +599,7 @@ RSpec.describe Application, type: :model do
 
       it 'returns only globex applications' do
         applications = Application.all
-        expect(applications.pluck(:brand_id).uniq).to eq([brands(:globex).id])
+        expect(applications.pluck(:brand_id).uniq).to eq([ brands(:globex).id ])
       end
     end
   end

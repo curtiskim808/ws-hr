@@ -35,7 +35,7 @@ module AwsConfig
     # RETURNS: String ARN for the notification topic
     # EXAMPLE: "arn:aws:sns:us-east-1:123456789012:hr-notifications"
     def sns_topic_arn
-      ENV.fetch('NOTIFICATION_SNS_TOPIC_ARN', nil)
+      ENV.fetch("NOTIFICATION_SNS_TOPIC_ARN", nil)
     end
 
     # Check if SNS is properly configured
@@ -56,15 +56,15 @@ module AwsConfig
       return mock_sns_client if Rails.env.test?
 
       Aws::SNS::Client.new(
-        region: ENV.fetch('AWS_REGION', 'us-east-1'),
+        region: ENV.fetch("AWS_REGION", "us-east-1"),
         credentials: aws_credentials
       )
     end
 
     def aws_credentials
       Aws::Credentials.new(
-        ENV.fetch('AWS_ACCESS_KEY_ID', nil),
-        ENV.fetch('AWS_SECRET_ACCESS_KEY', nil)
+        ENV.fetch("AWS_ACCESS_KEY_ID", nil),
+        ENV.fetch("AWS_SECRET_ACCESS_KEY", nil)
       )
     end
 

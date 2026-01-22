@@ -29,17 +29,17 @@ class ApplicationStageTransition < ApplicationRecord
   # FROM STAGE: What stage did the application come from?
   # OPTIONAL: Can be nil for initial stage assignment
   # CLASS_NAME: HiringStage (not ApplicationStage)
-  belongs_to :from_stage, class_name: 'HiringStage', optional: true
+  belongs_to :from_stage, class_name: "HiringStage", optional: true
 
   # TO STAGE: What stage did the application move to?
   # REQUIRED: Every transition must have a destination
   # CLASS_NAME: HiringStage
-  belongs_to :to_stage, class_name: 'HiringStage'
+  belongs_to :to_stage, class_name: "HiringStage"
 
   # TRANSITIONED BY: Which user made this transition?
   # OPTIONAL: Can be nil for automated/system transitions
   # CLASS_NAME: User
-  belongs_to :transitioned_by, class_name: 'User', optional: true
+  belongs_to :transitioned_by, class_name: "User", optional: true
 
   # =============================================================================
   # T099: VALIDATIONS
@@ -212,5 +212,4 @@ class ApplicationStageTransition < ApplicationRecord
       errors.add(:from_stage, "must belong to the application's hiring process")
     end
   end
-
 end

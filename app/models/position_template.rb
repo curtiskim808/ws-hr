@@ -11,6 +11,8 @@ class PositionTemplate < ApplicationRecord
   # ENUMS
   # Status enum: draft (0), active (1)
   # T036: Templates start as drafts and can be activated for use
+  # RAILS 8: Must declare attribute type explicitly before enum
+  attribute :status, :integer, default: 0
   enum :status, {
     draft: 0,
     active: 1

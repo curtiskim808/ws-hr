@@ -1,0 +1,13 @@
+# mise (formerly rtx) configuration
+# This file is used by mise to automatically install and use the correct versions
+# See: https://mise.jdx.dev/
+
+[tools]
+ruby = "3.4.1"
+postgres = "15.5"
+redis = "7.2.4"
+
+[env]
+# Set environment variables for tools
+POSTGRES_DATA_DIR = "{cache_dir}/postgres"
+REDIS_DATA_DIR = "{cache_dir}/redis"

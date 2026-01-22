@@ -120,12 +120,12 @@ class NotificationJob < ApplicationJob
       topic_arn: AwsConfig.sns_topic_arn,
       message: payload.to_json,
       message_attributes: {
-        'event_type' => {
-          data_type: 'String',
+        "event_type" => {
+          data_type: "String",
           string_value: payload[:event_type].to_s
         },
-        'brand_id' => {
-          data_type: 'Number',
+        "brand_id" => {
+          data_type: "Number",
           string_value: payload[:brand_id].to_s
         }
       }
@@ -191,7 +191,7 @@ class NotificationJob < ApplicationJob
 
     {
       event_type: :application_received,
-      channel: 'email',
+      channel: "email",
       recipient: determine_recipient(application),
       payload: {
         application_id: application.id,
@@ -229,7 +229,7 @@ class NotificationJob < ApplicationJob
 
     {
       event_type: :candidate_hired,
-      channel: 'email',
+      channel: "email",
       recipient: application.applicant.email,
       payload: {
         application_id: application.id,
@@ -269,7 +269,7 @@ class NotificationJob < ApplicationJob
 
     {
       event_type: :candidate_rejected,
-      channel: 'email',
+      channel: "email",
       recipient: application.applicant.email,
       payload: {
         application_id: application.id,
@@ -306,7 +306,7 @@ class NotificationJob < ApplicationJob
 
     {
       event_type: :stage_changed,
-      channel: 'email',
+      channel: "email",
       recipient: determine_recipient(application),
       payload: {
         application_id: application.id,
@@ -347,21 +347,21 @@ class NotificationJob < ApplicationJob
       Rails.logger.warn "[NotificationJob] Interview model not yet implemented"
       return {
         event_type: :interview_scheduled,
-        channel: 'email',
-        recipient: 'placeholder@example.com',
-        payload: { interview_id: interview_id, message: 'Interview model pending' },
+        channel: "email",
+        recipient: "placeholder@example.com",
+        payload: { interview_id: interview_id, message: "Interview model pending" },
         timestamp: Time.current.iso8601,
         brand_id: 0
       }
     end
 
     interview = Interview.unscoped
-                         .includes(application: [:applicant, :job_posting], interviewer: [], location: [])
+                         .includes(application: [ :applicant, :job_posting ], interviewer: [], location: [])
                          .find(interview_id)
 
     {
       event_type: :interview_scheduled,
-      channel: 'email',
+      channel: "email",
       recipient: interview.application.applicant.email,
       payload: {
         interview_id: interview.id,
@@ -405,21 +405,21 @@ class NotificationJob < ApplicationJob
       Rails.logger.warn "[NotificationJob] Interview model not yet implemented"
       return {
         event_type: :interview_cancelled,
-        channel: 'email',
-        recipient: 'placeholder@example.com',
-        payload: { interview_id: interview_id, message: 'Interview model pending' },
+        channel: "email",
+        recipient: "placeholder@example.com",
+        payload: { interview_id: interview_id, message: "Interview model pending" },
         timestamp: Time.current.iso8601,
         brand_id: 0
       }
     end
 
     interview = Interview.unscoped
-                         .includes(application: [:applicant, :job_posting], interviewer: [])
+                         .includes(application: [ :applicant, :job_posting ], interviewer: [])
                          .find(interview_id)
 
     {
       event_type: :interview_cancelled,
-      channel: 'email',
+      channel: "email",
       recipient: interview.application.applicant.email,
       payload: {
         interview_id: interview.id,
@@ -446,7 +446,7 @@ class NotificationJob < ApplicationJob
   def determine_recipient(application)
     # Find hiring managers assigned to this location
     location = application.job_posting.location
-    return 'hiring@example.com' unless location
+    return "hiring@example.com" unless location
 
     # Find users with hiring_manager role assigned to this location
     hiring_manager = User.unscoped
@@ -456,6 +456,6 @@ class NotificationJob < ApplicationJob
                          .where(location_assignments: { location_id: location.id })
                          .first
 
-    hiring_manager&.email || 'hiring@example.com'
+    hiring_manager&.email || "hiring@example.com"
   end
 end

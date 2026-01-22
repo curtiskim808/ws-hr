@@ -41,10 +41,12 @@ module WsHrApp
     # Skip views, helpers and assets when generating a new resource.
     config.api_only = true
 
-    # Enable sessions for test environment (required for devise-jwt sign_in)
-    # NOTE: API-only apps disable sessions by default, but devise-jwt needs sessions
-    # to generate tokens via sign_in helper in tests
-    # This is configured here so middleware is set up before Rails initializes
+    # Enable sessions for API authentication.
+    # NOTE: API-only apps disable sessions by default, but devise-jwt uses sign_in
+    # which writes to the session to generate tokens. We enable cookies + session
+    # store so login/logout works in all environments.
+    config.middleware.use ActionDispatch::Cookies
+    config.middleware.use ActionDispatch::Session::CookieStore, key: "_ws_hr_app_session"
 
     # ActiveJob configuration for Solid Queue
     config.active_job.queue_adapter = :solid_queue

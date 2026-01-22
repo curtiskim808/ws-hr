@@ -159,7 +159,6 @@ RSpec.describe JobPosting, type: :model do
         expect(posting.published_at).to be_present
         expect(posting.published_at).to be_within(1.second).of(Time.current)
       end
-
     end
 
     # TEST: Transition from link_only to published
@@ -437,7 +436,7 @@ RSpec.describe JobPosting, type: :model do
     # EXPECTATION: Returns postings ordered by published_at DESC
     # recent_posting (1d ago)
     # customer_support_published (5d ago)
-    # backend_engineer_published (7d ago)    
+    # backend_engineer_published (7d ago)
     # sales_rep_published (14d ago)
     describe '.recent' do
       it 'orders postings by published_at descending' do

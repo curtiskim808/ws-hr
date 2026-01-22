@@ -1,4 +1,5 @@
 Rails.application.routes.draw do
+  mount Rswag::Ui::Engine => '/api-docs'
   # DEVISE ROUTES
   # EXPLANATION: Skip default Devise routes since we're building a custom API
   # WHY: Devise's default routes are for HTML views, not JSON API
@@ -47,8 +48,8 @@ Rails.application.routes.draw do
       # - Standard: Follows Rails conventions for resourceful routing
       # - Clear: Explicit endpoint names (not /sessions/new)
       scope :auth do
-        post 'login', to: 'auth#login'
-        delete 'logout', to: 'auth#logout'
+        post "login", to: "auth#login"
+        delete "logout", to: "auth#logout"
       end
 
       # RESOURCE ROUTES
@@ -101,7 +102,7 @@ Rails.application.routes.draw do
       # QUERY PARAMETERS (index):
       #   ?source=linkedin - Filter by source
       #   ?flagged=true - Filter flagged applicants
-      resources :applicants, only: [:index, :show, :create, :update]
+      resources :applicants, only: [ :index, :show, :create, :update ]
 
       # T110: Applications (US3)
       # ENDPOINTS:
@@ -129,6 +130,7 @@ Rails.application.routes.draw do
       # FUTURE RESOURCE ROUTES
       # - resources :availability_slots    # US6: Availability
       # - resources :interviews            # US7: Interviews
+
     end
   end
 end

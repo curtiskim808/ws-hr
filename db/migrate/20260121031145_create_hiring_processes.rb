@@ -56,14 +56,14 @@ class CreateHiringProcesses < ActiveRecord::Migration[8.0]
     # PURPOSE: Fast lookup of default process for a brand
     # QUERY: SELECT * FROM hiring_processes WHERE brand_id = ? AND is_default = true
     # PERFORMANCE: O(1) lookup instead of table scan
-    add_index :hiring_processes, [:brand_id, :is_default],
+    add_index :hiring_processes, [ :brand_id, :is_default ],
               name: 'index_hiring_processes_on_brand_and_default'
 
     # COMPOSITE INDEX: brand_id + active
     # PURPOSE: Fast lookup of active processes for a brand
     # QUERY: SELECT * FROM hiring_processes WHERE brand_id = ? AND active = true
     # USE CASE: Dropdown list when creating job posting
-    add_index :hiring_processes, [:brand_id, :active],
+    add_index :hiring_processes, [ :brand_id, :active ],
               name: 'index_hiring_processes_on_brand_and_active'
   end
 end

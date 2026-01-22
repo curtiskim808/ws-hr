@@ -29,12 +29,12 @@ class CreatePositionTemplates < ActiveRecord::Migration[8.0]
     # T034: These indexes optimize common queries
 
     # Filter by brand and status (e.g., "show me all active templates for this brand")
-    add_index :position_templates, [:brand_id, :status]
+    add_index :position_templates, [ :brand_id, :status ]
 
     # Filter by brand and category (e.g., "show me all engineering templates")
-    add_index :position_templates, [:brand_id, :category]
+    add_index :position_templates, [ :brand_id, :category ]
 
     # Sort by creation date within brand (e.g., "show me recent templates")
-    add_index :position_templates, [:brand_id, :created_at]
+    add_index :position_templates, [ :brand_id, :created_at ]
   end
 end

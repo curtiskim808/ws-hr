@@ -12,13 +12,14 @@ module Api
     # - Only admins and hiring managers can manage templates
     # - Automatic brand scoping via BrandScoped concern in model
     class PositionTemplatesController < BaseController
+      include Pagy::Backend
       # CALLBACKS
       # T040: Set the template and authorize access before actions
       # NOTE: index and show allow any authenticated user
       # Only create, update, destroy require admin or hiring_manager role
-      before_action :authorize_manage_templates!, only: [:create, :update, :destroy]
-      before_action :set_position_template, only: [:show, :update, :destroy]
-      
+      before_action :authorize_manage_templates!, only: [ :create, :update, :destroy ]
+      before_action :set_position_template, only: [ :show, :update, :destroy ]
+
 
       # INDEX - List all position templates
       # GET /api/v1/position_templates
@@ -26,15 +27,25 @@ module Api
       # QUERY PARAMETERS (optional):
       # - status: filter by status (draft, active)
       # - category: filter by category
+      # - page[number]: page number (default: 1)
+      # - page[size]: items per page (default: 25, max: 100)
       #
       # RESPONSE: JSON array of templates
       # BRAND SCOPING: Automatic via BrandScoped concern
       def index
         templates = PositionTemplate.all
+
+        # Filter by status
         templates = templates.where(status: params[:status]) if params[:status].present?
+
+        # Filter by category
         templates = templates.by_category(params[:category]) if params[:category].present?
 
-        render json: PositionTemplateSerializer.new(templates).serializable_hash
+        pagy, paginated_templates = pagy(templates, page: page_number, items: page_size)
+
+        render json: PositionTemplateSerializer.new(paginated_templates).serializable_hash.merge(
+          meta: pagination_meta(pagy)
+        )
       end
 
       # SHOW - Get a single position template
@@ -104,7 +115,7 @@ module Api
         # If user is authenticated but doesn't have required role, return 403 (forbidden)
         unless current_user.role_admin? || current_user.role_hiring_manager?
           render json: { error: "Unauthorized" }, status: :forbidden
-          return false
+          false
         end
       end
 
@@ -124,6 +135,27 @@ module Api
           :education_requirement,
           :status
         )
+      end
+
+      # Pagination helpers (JSON:API format)
+      def page_number
+        params.dig(:page, :number)&.to_i || 1
+      end
+
+      def page_size
+        size = params.dig(:page, :size)&.to_i || 25
+        [ size, 100 ].min
+      end
+
+      def pagination_meta(pagy)
+        {
+          pagination: {
+            current_page: pagy.page,
+            per_page: pagy.items,
+            total_pages: pagy.pages,
+            total_count: pagy.count
+          }
+        }
       end
     end
   end
