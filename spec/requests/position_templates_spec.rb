@@ -659,7 +659,7 @@ RSpec.describe 'Position Templates API', type: :request do
           location: locations(:acme_hq),
           status: :draft
         )
-        
+
         delete "/api/v1/position_templates/#{template.id}", headers: headers
         expect(response).to have_http_status(:unprocessable_entity)
       end
