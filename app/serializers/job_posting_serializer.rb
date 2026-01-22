@@ -41,5 +41,4 @@ class JobPostingSerializer
   belongs_to :location
 
   belongs_to :hiring_process
-
 end

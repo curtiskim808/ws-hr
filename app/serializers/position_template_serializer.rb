@@ -19,5 +19,4 @@ class PositionTemplateSerializer
   attribute :status_label do |template|
     template.status.humanize
   end
-
 end

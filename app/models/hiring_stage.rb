@@ -2,7 +2,6 @@
 # Define individual steps within a hiring process
 
 class HiringStage < ApplicationRecord
-
   belongs_to :hiring_process
 
 

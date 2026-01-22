@@ -2,7 +2,6 @@
 # Track audit trail of application stage changes
 
 class ApplicationStageTransition < ApplicationRecord
-
   belongs_to :application
 
   belongs_to :from_stage, class_name: "HiringStage", optional: true

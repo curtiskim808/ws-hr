@@ -499,7 +499,7 @@ RSpec.describe Application, type: :model do
       it 'sets archived_at timestamp' do
         freeze_time do
           application.archive!
-          
+
           expect(application.archived_at).to be_within(1.second).of(Time.current)
         end
       end

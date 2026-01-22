@@ -8,5 +8,4 @@ class Current < ActiveSupport::CurrentAttributes
   def brand
     super || user&.brand
   end
-
 end

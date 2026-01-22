@@ -1,5 +1,5 @@
 Rails.application.routes.draw do
-  mount Rswag::Ui::Engine => '/api-docs'
+  mount Rswag::Ui::Engine => "/api-docs"
   # DEVISE ROUTES
   # EXPLANATION: Skip default Devise routes since we're building a custom API
   # WHY: Devise's default routes are for HTML views, not JSON API
@@ -130,7 +130,6 @@ Rails.application.routes.draw do
       # FUTURE RESOURCE ROUTES
       # - resources :availability_slots    # US6: Availability
       # - resources :interviews            # US7: Interviews
-
     end
   end
 end
