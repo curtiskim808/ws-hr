@@ -80,6 +80,6 @@ group :development do
 end
 
 group :test do
-  gem 'simplecov', require: false
-  gem 'coveralls_reborn', require: false
+  gem "simplecov", require: false
+  gem "coveralls_reborn", require: false
 end
