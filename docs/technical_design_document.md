@@ -66,20 +66,20 @@ Position Template → Job Posting → Application → Stage Progression → Hire
 
 | Feature Area | Status | Description |
 |--------------|--------|-------------|
-| Authentication | ✅ Implemented | JWT-based authentication with Devise |
-| Position Templates | ✅ Implemented | CRUD for job templates |
-| Job Postings | ✅ Implemented | Create from templates, publish/unpublish |
-| Applicants | ✅ Implemented | Candidate management |
-| Applications | ✅ Implemented | Full hiring pipeline with stages |
-| Notifications | ✅ Implemented | AWS SNS integration via background jobs |
-| Multi-tenancy | ✅ Implemented | Brand-based data isolation |
+| Authentication | Implemented | JWT-based authentication with Devise |
+| Position Templates | Implemented | CRUD for job templates |
+| Job Postings | Implemented | Create from templates, publish/unpublish |
+| Applicants | Implemented | Candidate management |
+| Applications | Implemented | Full hiring pipeline with stages |
+| Notifications | Implemented | AWS SNS integration via background jobs |
+| Multi-tenancy | Implemented | Brand-based data isolation |
 
 ### 2.2 Future Phases
 
 #### Phase 2 (Planned)
 - Availability Slots (Interviewer scheduling)
 - Interview Scheduling
-- Evaluation Plans & Scoring
+- Evaluation Plans & Scoring (Match scores (AI))
 - Advanced File System
 
 #### Phase 3 (Future)
@@ -195,6 +195,19 @@ Position Template → Job Posting → Application → Stage Progression → Hire
 | **Repository Pattern** | ActiveRecord scopes | Query abstraction |
 | **Background Jobs** | Solid Queue | Async notification delivery |
 
+#### DHH Style Architecture
+> Following DHH's 37signals philosophy, this implementation emphasizes:
+
+- Fat Models: All business logic lives in models (Application#hire!, JobPosting#publish!, etc.)
+- Thin Controllers: 1-5 line actions only, strictly REST (no custom actions)
+- Current Attributes: Current.user and Current.brand available throughout app
+- User-based Authorization: Current.user.can_manage_application?(@application) instead of Pundit policies
+- Fixtures: YAML fixtures for test data instead of FactoryBot
+- Bang Methods: State changes use fail-fast bang methods (hire!, reject!, publish!)
+- Semantic Naming: set_ prefix for private setters, {model}_params for strong parameters
+- No Service Objects: Business logic encapsulated in fat models, not separate service classes
+- Transaction Safety: after_commit callbacks for ALL side effects (notifications, broadcasts, cache invalidation)
+
 ### 3.4 Request Flow
 
 ```
@@ -215,11 +228,34 @@ Position Template → Job Posting → Application → Stage Progression → Hire
 8. Response returned to client
 ```
 
+
+      
+### 3.5 Architecture Decisions (Confirmed)                                                                                                                                                                
+                                                                                                                                                                                                       
+  | Decision | Choice | Rationale |                                                                                                                                                                    
+  |----------|--------|-----------|                                                                                                                                                                    
+  | Multi-tenancy | **Brand-based isolation** | Each brand is a tenant with isolated data |                                                                                                            
+  | Authentication | **JWT tokens** | Stateless, scalable for API-only backend |                                                                                                                       
+  | File Storage | **Local (ActiveStorage)** | Simple for MVP, can migrate to S3 later |                                                                                                               
+  | Notifications | **AWS SNS** | Decouple via external notification-service |                           
+
+
 ---
 
 ## 4. Functional Requirements
 
 ### 4.1 User Stories - MVP
+
+  #### Roles                                                                                                                                                                                            
+                                                                                                                                                                                                       
+  | Role | Description |                                                                                                                                                                               
+  |------|-------------|                                                                                                                                                                               
+  | Super Admin | Full system access |                                                                                                                                                                 
+  | Admin | Manage hiring processes, templates, all applicants |                                                                                                                                       
+  | Hiring Manager | Manage job postings, applicants for assigned locations |                                                                                                                          
+  | Interviewer | View assigned interviews, update interview status |                                                                                                                                  
+             
+
 
 #### US1: Position Template Management
 | ID | As a | I want to | So that |
@@ -258,26 +294,26 @@ Position Template → Job Posting → Application → Stage Progression → Hire
 | Resource | Super Admin | Admin | Hiring Manager | Interviewer | Public |
 |----------|-------------|-------|----------------|-------------|--------|
 | **Position Templates** |
-| Create | ✅ | ✅ | ✅ | ❌ | ❌ |
-| Read | ✅ | ✅ | ✅ | ✅ | ❌ |
-| Update | ✅ | ✅ | ✅ | ❌ | ❌ |
-| Delete | ✅ | ✅ | ✅ | ❌ | ❌ |
+| Create | True | True | True | False | False |
+| Read | True | True | True | True | False |
+| Update | True | True | True | False | False |
+| Delete | True | True | True | False | False |
 | **Job Postings** |
-| Create | ✅ | ✅ | ✅ | ❌ | ❌ |
-| Read | ✅ | ✅ | ✅ | ❌ | ❌ |
-| Update | ✅ | ✅ | ✅ | ❌ | ❌ |
-| Delete | ✅ | ✅ | ✅ | ❌ | ❌ |
-| Publish | ✅ | ✅ | ✅ | ❌ | ❌ |
+| Create | True | True | True | False | False |
+| Read | True | True | True | False | False |
+| Update | True | True | True | False | False |
+| Delete | True | True | True | False | False |
+| Publish | True | True | True | False | False |
 | **Applications** |
-| Submit | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Read | ✅ | ✅ | ✅ | ✅ | ❌ |
-| Update | ✅ | ✅ | ✅ | ❌ | ❌ |
-| Hire/Reject | ✅ | ✅ | ✅ | ❌ | ❌ |
+| Submit | True | True | True | True | True |
+| Read | True | True | True | True | False |
+| Update | True | True | True | False | False |
+| Hire/Reject | True | True | True | False | False |
 | **Applicants** |
-| Create | ✅ | ✅ | ✅ | ❌ | ❌ |
-| Read | ✅ | ✅ | ✅ | ✅* | ❌ |
-| Update | ✅ | ✅ | ✅ | ❌ | ❌ |
-| Flag | ✅ | ✅ | ✅ | ❌ | ❌ |
+| Create | True | True | True | False | False |
+| Read | True | True | True | True* | False |
+| Update | True | True | True | False | False |
+| Flag | True | True | True | False | False |
 
 *Interviewer access is limited to applicants with assigned interviews.*
 
@@ -334,14 +370,14 @@ Position Template → Job Posting → Application → Stage Progression → Hire
 
 | Criteria | Solid Queue | Sidekiq |
 |----------|-------------|---------|
-| **Redis Dependency** | ❌ Not required (uses PostgreSQL) | ✅ Required |
-| **Rails Native** | ✅ Built into Rails 8 | ❌ Third-party gem |
-| **Simplicity** | ✅ Zero external dependencies | ⚠️ Requires Redis setup |
-| **Maintenance** | ✅ First-party support | ⚠️ Community maintained |
-| **Debugging** | ✅ Jobs in DB, easy to inspect | ⚠️ Requires Sidekiq Web UI |
-| **Performance** | ⚠️ Good for moderate load | ✅ Excellent for high load |
-| **Concurrency** | ⚠️ Limited by DB connections | ✅ Highly concurrent |
-| **Cost** | ✅ Free | ✅ Free (Pro = paid) |
+| **Redis Dependency** |  Not required (uses PostgreSQL) |  Required |
+| **Rails Native** | Built into Rails 8 | Third-party gem |
+| **Simplicity** | Zero external dependencies | Requires Redis setup |
+| **Maintenance** | First-party support | Community maintained |
+| **Debugging** | Jobs in DB, easy to inspect | Requires Sidekiq Web UI |
+| **Performance** | Good for moderate load | Excellent for high load |
+| **Concurrency** | Limited by DB connections | Highly concurrent |
+| **Cost** | Free | Free (Pro = paid) |
 
 **Pros of Solid Queue:**
 1. **Simplified Infrastructure** - No Redis required, fewer moving parts
@@ -368,11 +404,11 @@ Position Template → Job Posting → Application → Stage Progression → Hire
 
 | Criteria | JWT | Session-based |
 |----------|-----|---------------|
-| **Stateless** | ✅ Token contains all info | ❌ Requires session storage |
-| **Scalability** | ✅ Easy horizontal scaling | ⚠️ Requires shared session store |
-| **Mobile-friendly** | ✅ Works everywhere | ⚠️ Cookie issues on mobile |
-| **API Design** | ✅ RESTful, stateless | ⚠️ Stateful |
-| **Token Revocation** | ⚠️ Requires denylist | ✅ Easy session invalidation |
+| **Stateless** |  Token contains all info |  Requires session storage |
+| **Scalability** |  Easy horizontal scaling | Requires shared session store |
+| **Mobile-friendly** |  Works everywhere |  Cookie issues on mobile |
+| **API Design** |  RESTful, stateless |  Stateful |
+| **Token Revocation** | Requires denylist |  Easy session invalidation |
 
 **Implementation:**
 - Using `devise-jwt` gem
@@ -385,10 +421,10 @@ Position Template → Job Posting → Application → Stage Progression → Hire
 
 | Criteria | Row-level (brand_id) | Schema-per-tenant |
 |----------|---------------------|-------------------|
-| **Complexity** | ✅ Simple queries | ❌ Complex migrations |
-| **Performance** | ⚠️ Requires indexes | ✅ Isolated data |
-| **Maintenance** | ✅ Single schema | ❌ Multiple schemas |
-| **Data Isolation** | ⚠️ Logical (requires care) | ✅ Physical |
+| **Complexity** | Simple queries | Complex migrations |
+| **Performance** | Requires indexes | Isolated data |
+| **Maintenance** | Single schema | Multiple schemas |
+| **Data Isolation** | Logical (requires care) | Physical |
 
 **Implementation:**
 - `BrandScoped` concern adds `default_scope` filtering
@@ -401,10 +437,10 @@ Position Template → Job Posting → Application → Stage Progression → Hire
 
 | Criteria | AASM | Plain Enum |
 |----------|------|------------|
-| **Transitions** | ✅ Validates transitions | ❌ Manual validation |
-| **Callbacks** | ✅ Before/after hooks | ❌ Manual implementation |
-| **Events** | ✅ Named events (publish!) | ❌ Direct status change |
-| **Guards** | ✅ Conditional transitions | ❌ Manual conditionals |
+| **Transitions** | Validates transitions | Manual validation |
+| **Callbacks** | Before/after hooks | Manual implementation |
+| **Events** | Named events (publish!) | Direct status change |
+| **Guards** | Conditional transitions | Manual conditionals |
 
 **Implementation:**
 - `Application` model: `in_progress → hired/rejected/archived`
@@ -448,11 +484,11 @@ Authorization: Bearer <token>
 
 | Method | Endpoint | Description | Auth Required |
 |--------|----------|-------------|---------------|
-| GET | `/position_templates` | List templates | ✅ |
-| GET | `/position_templates/:id` | Get single template | ✅ |
-| POST | `/position_templates` | Create template | ✅ Admin/HM |
-| PATCH | `/position_templates/:id` | Update template | ✅ Admin/HM |
-| DELETE | `/position_templates/:id` | Delete template | ✅ Admin/HM |
+| GET | `/position_templates` | List templates | True |
+| GET | `/position_templates/:id` | Get single template | True |
+| POST | `/position_templates` | Create template | Admin/HM |
+| PATCH | `/position_templates/:id` | Update template | Admin/HM |
+| DELETE | `/position_templates/:id` | Delete template | Admin/HM |
 
 **Query Parameters:**
 - `status` - Filter by status (draft, active)
@@ -464,11 +500,11 @@ Authorization: Bearer <token>
 
 | Method | Endpoint | Description | Auth Required |
 |--------|----------|-------------|---------------|
-| GET | `/job_postings` | List postings | ✅ Admin/HM |
-| GET | `/job_postings/:id` | Get single posting | ✅ Admin/HM |
-| POST | `/job_postings` | Create posting | ✅ Admin/HM |
-| PATCH | `/job_postings/:id` | Update/transition status | ✅ Admin/HM |
-| DELETE | `/job_postings/:id` | Delete posting | ✅ Admin/HM |
+| GET | `/job_postings` | List postings | Admin/HM |
+| GET | `/job_postings/:id` | Get single posting | Admin/HM |
+| POST | `/job_postings` | Create posting | Admin/HM |
+| PATCH | `/job_postings/:id` | Update/transition status | Admin/HM |
+| DELETE | `/job_postings/:id` | Delete posting | Admin/HM |
 
 **Query Parameters:**
 - `status` - Filter by status (draft, published, link_only, unpublished)
@@ -485,10 +521,10 @@ Authorization: Bearer <token>
 
 | Method | Endpoint | Description | Auth Required |
 |--------|----------|-------------|---------------|
-| GET | `/applicants` | List applicants | ✅ |
-| GET | `/applicants/:id` | Get single applicant | ✅ |
-| POST | `/applicants` | Create applicant | ✅ Admin/HM |
-| PATCH | `/applicants/:id` | Update applicant | ✅ Admin/HM |
+| GET | `/applicants` | List applicants | True |
+| GET | `/applicants/:id` | Get single applicant | True (Interviewers limited to assigned interviews) |
+| POST | `/applicants` | Create applicant | True Admin/HM |
+| PATCH | `/applicants/:id` | Update applicant | True Admin/HM |
 
 **Query Parameters:**
 - `source` - Filter by source (linkedin, referral, careers_page)
@@ -502,11 +538,11 @@ Note: Interviewers can only view applicants they have interviews with.
 
 | Method | Endpoint | Description | Auth Required |
 |--------|----------|-------------|---------------|
-| GET | `/applications` | List applications | ✅ |
-| GET | `/applications/:id` | Get single application | ✅ |
-| POST | `/applications` | Submit application | ❌ Public |
-| PATCH | `/applications/:id` | Update/action | ✅ Admin/HM |
-| DELETE | `/applications/:id` | Archive application | ✅ Admin/HM |
+| GET | `/applications` | List applications | True |
+| GET | `/applications/:id` | Get single application | True |
+| POST | `/applications` | Submit application | False Public |
+| PATCH | `/applications/:id` | Update/action | Admin/HM |
+| DELETE | `/applications/:id` | Archive application | Admin/HM |
 
 **Query Parameters:**
 - `status` - Filter by status (in_progress, hired, rejected, archived)
@@ -515,7 +551,7 @@ Note: Interviewers can only view applicants they have interviews with.
 - `applicant_id` - Filter by applicant
 - `page[number]` - Page number
 - `page[size]` - Items per page
-- `sort` - Sort field (created_at, status, applicant_name)
+- `sort` - Sort field (created_at, applied_at, status, applicant_name)
 - `direction` - Sort direction (asc, desc)
 
 **Action Types via PATCH:**
@@ -945,10 +981,10 @@ services:
 
 | Variable | Description | Required |
 |----------|-------------|----------|
-| DATABASE_URL | PostgreSQL connection string | ✅ |
-| REDIS_URL | Redis connection string | ✅ |
-| SECRET_KEY_BASE | Rails secret key (32+ chars) | ✅ |
-| DEVISE_JWT_SECRET_KEY | JWT signing key (64+ chars) | ✅ |
+| DATABASE_URL | PostgreSQL connection string | True |
+| REDIS_URL | Redis connection string | True |
+| SECRET_KEY_BASE | Rails secret key (32+ chars) | True |
+| DEVISE_JWT_SECRET_KEY | JWT signing key (64+ chars) | True |
 | AWS_ACCESS_KEY_ID | AWS credentials | For SNS |
 | AWS_SECRET_ACCESS_KEY | AWS credentials | For SNS |
 | AWS_REGION | AWS region | For SNS |
