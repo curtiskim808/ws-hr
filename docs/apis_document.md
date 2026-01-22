@@ -109,6 +109,8 @@ Request:
 
 ## Job Postings
 
+Note: Job postings endpoints require Admin or Hiring Manager access.
+
 ### List Job Postings
 
 ```
@@ -117,6 +119,7 @@ GET /api/v1/job_postings?status=published
 GET /api/v1/job_postings?status=draft
 GET /api/v1/job_postings?location_id=1
 GET /api/v1/job_postings?status=published&location_id=1
+GET /api/v1/job_postings?page[number]=1&page[size]=25
 ```
 
 ### Get Single Job Posting
@@ -187,11 +190,14 @@ GET /api/v1/applicants
 GET /api/v1/applicants?source=linkedin
 GET /api/v1/applicants?source=referral
 GET /api/v1/applicants?flagged=true
+GET /api/v1/applicants?page[number]=1&page[size]=25
 ```
 
 ### Get Single Applicant (with applications)
 
 `GET /api/v1/applicants/:id`
+
+Note: Interviewers can only view applicants they have interviews with.
 
 ### Create Applicant Manually
 
@@ -258,14 +264,13 @@ GET /api/v1/applications?applicant_id=1
 GET /api/v1/applications?page[number]=1&page[size]=25
 GET /api/v1/applications?sort=created_at&direction=desc
 GET /api/v1/applications?sort=applicant_name&direction=asc
-GET /api/v1/applications?sort=status
+GET /api/v1/applications?sort=status&direction=asc
 ```
 
 ### Get Application Detail (with stage history)
 
 ```
 GET /api/v1/applications/:id
-GET /api/v1/applications/:id?include=stage_transitions
 ```
 
 ### Advance to Next Stage
@@ -383,8 +388,8 @@ Example:
 | --- | --- | --- | --- |
 | Position Templates (read) | ✅ | ✅ | ✅ |
 | Position Templates (write) | ✅ | ✅ | ❌ |
-| Job Postings | ✅ | ✅ | ❌ |
-| Applicants (read) | ✅ | ✅ | ✅ |
+| Job Postings (read/write) | ✅ | ✅ | ❌ |
+| Applicants (read) | ✅ | ✅ | ✅ (limited) |
 | Applicants (write) | ✅ | ✅ | ❌ |
 | Applications (read) | ✅ | ✅ | ✅ |
 | Applications (write) | ✅ | ✅ | ❌ |

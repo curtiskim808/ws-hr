@@ -8,7 +8,6 @@ module BrandScoped
     # Default scope - all queries automatically scoped to current brand
     default_scope { where(brand_id: Current.brand&.id) if Current.brand }
 
-    # Explicit scope for cases where default_scope is bypassed
     scope :for_brand, ->(brand) { where(brand_id: brand.is_a?(Brand) ? brand.id : brand) }
   end
 

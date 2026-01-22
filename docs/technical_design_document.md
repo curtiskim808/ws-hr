@@ -275,9 +275,11 @@ Position Template → Job Posting → Application → Stage Progression → Hire
 | Hire/Reject | ✅ | ✅ | ✅ | ❌ | ❌ |
 | **Applicants** |
 | Create | ✅ | ✅ | ✅ | ❌ | ❌ |
-| Read | ✅ | ✅ | ✅ | ✅ | ❌ |
+| Read | ✅ | ✅ | ✅ | ✅* | ❌ |
 | Update | ✅ | ✅ | ✅ | ❌ | ❌ |
 | Flag | ✅ | ✅ | ✅ | ❌ | ❌ |
+
+*Interviewer access is limited to applicants with assigned interviews.*
 
 ### 4.3 State Machines
 
@@ -471,6 +473,8 @@ Authorization: Bearer <token>
 **Query Parameters:**
 - `status` - Filter by status (draft, published, link_only, unpublished)
 - `location_id` - Filter by location
+- `page[number]` - Page number (default: 1)
+- `page[size]` - Items per page (default: 25, max: 100)
 
 **Status Transitions via PATCH:**
 ```json
@@ -489,6 +493,10 @@ Authorization: Bearer <token>
 **Query Parameters:**
 - `source` - Filter by source (linkedin, referral, careers_page)
 - `flagged` - Filter flagged applicants (true/false)
+- `page[number]` - Page number (default: 1)
+- `page[size]` - Items per page (default: 25, max: 100)
+
+Note: Interviewers can only view applicants they have interviews with.
 
 ### 6.6 Applications
 

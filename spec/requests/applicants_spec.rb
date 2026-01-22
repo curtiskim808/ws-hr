@@ -73,6 +73,36 @@ RSpec.describe 'Applicants API', type: :request do
         expect(sample).to have_key('attributes')
         expect(sample['type']).to eq('applicant')
       end
+
+      it 'paginates applicants with meta pagination' do
+        get '/api/v1/applicants',
+            headers: headers,
+            params: { page: { number: 1, size: 1 } }
+
+        expect(response).to have_http_status(:ok)
+        json = JSON.parse(response.body)
+
+        expect(json['data'].length).to eq(1)
+        expect(json).to have_key('meta')
+        expect(json['meta']).to have_key('pagination')
+
+        pagination = json['meta']['pagination']
+        expect(pagination['current_page']).to eq(1)
+        expect(pagination['per_page']).to eq(1)
+        expect(pagination['total_count']).to be >= 1
+      end
+    end
+
+    context 'with interviewer role' do
+      let(:headers) { auth_headers(users(:acme_interviewer)) }
+
+      it 'returns no applicants without assigned interviews' do
+        get '/api/v1/applicants', headers: headers
+
+        expect(response).to have_http_status(:ok)
+        json = JSON.parse(response.body)
+        expect(json['data']).to be_empty
+      end
     end
   end
 
@@ -96,6 +126,12 @@ RSpec.describe 'Applicants API', type: :request do
 
     it 'returns 404 for cross-brand access' do
       get "/api/v1/applicants/#{applicants(:globex_applicant).id}", headers: headers
+      expect(response).to have_http_status(:not_found)
+    end
+
+    it 'returns 404 for interviewer without assigned interviews' do
+      interviewer_headers = auth_headers(users(:acme_interviewer))
+      get "/api/v1/applicants/#{applicants(:john_doe).id}", headers: interviewer_headers
       expect(response).to have_http_status(:not_found)
     end
   end
@@ -178,9 +214,9 @@ RSpec.describe 'Applicants API', type: :request do
     context 'with interviewer user' do
       let(:headers) { auth_headers(users(:acme_interviewer)) }
 
-      it 'returns 403 forbidden' do
+      it 'returns 404 forbidden' do
         patch "/api/v1/applicants/#{applicant.id}", params: payload, headers: headers
-        expect(response).to have_http_status(:forbidden)
+        expect(response).to have_http_status(:not_found)
       end
     end
 

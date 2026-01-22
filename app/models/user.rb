@@ -1,16 +1,12 @@
 class User < ApplicationRecord
-  # Include default devise modules. Others available are:
-  # :confirmable, :lockable, :timeoutable, :trackable and :omniauthable
   devise :database_authenticatable,
          :recoverable, :rememberable, :validatable,
          :jwt_authenticatable, jwt_revocation_strategy: JwtDenylist
 
-  # Associations
   belongs_to :brand
   has_many :location_assignments, dependent: :destroy
   has_many :locations, through: :location_assignments
 
-  # Enums
   enum :role, {
     super_admin: 0,
     admin: 1,
@@ -18,13 +14,11 @@ class User < ApplicationRecord
     interviewer: 3
   }, prefix: true
 
-  # Validations
   validates :first_name, presence: true
   validates :last_name, presence: true
   validates :email, uniqueness: { scope: :brand_id }
   validates :role, presence: true
 
-  # Instance methods
   def full_name
     "#{first_name} #{last_name}"
   end

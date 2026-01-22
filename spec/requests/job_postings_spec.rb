@@ -116,6 +116,24 @@ RSpec.describe 'Job Postings API', type: :request do
         expect(attributes).to have_key('status')
         expect(attributes).to have_key('published_at')
       end
+
+      it 'paginates job postings with meta pagination' do
+        get '/api/v1/job_postings',
+            headers: headers,
+            params: { page: { number: 1, size: 1 } }
+
+        expect(response).to have_http_status(:ok)
+        json = JSON.parse(response.body)
+
+        expect(json['data'].length).to eq(1)
+        expect(json).to have_key('meta')
+        expect(json['meta']).to have_key('pagination')
+
+        pagination = json['meta']['pagination']
+        expect(pagination['current_page']).to eq(1)
+        expect(pagination['per_page']).to eq(1)
+        expect(pagination['total_count']).to be >= 1
+      end
     end
 
     # -------------------------------------------------------------------------

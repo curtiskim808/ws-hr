@@ -130,13 +130,13 @@ paths:
       security:
         - BearerAuth: []
       parameters:
-        - name: filter[status]
+        - name: status
           in: query
           description: Filter by status (draft, active)
           schema:
             type: string
             enum: [draft, active]
-        - name: filter[category]
+        - name: category
           in: query
           description: Filter by category
           schema:
@@ -343,28 +343,22 @@ paths:
       tags:
         - Job Postings
       summary: List all job postings
-      description: Returns all job postings for the authenticated user's brand
+      description: Returns all job postings for the authenticated user's brand (Admin/Hiring Manager only)
       operationId: listJobPostings
       security:
         - BearerAuth: []
       parameters:
-        - name: filter[status]
+        - name: status
           in: query
           description: Filter by status (draft, published, link_only, unpublished)
           schema:
             type: string
             enum: [draft, published, link_only, unpublished]
-        - name: filter[location_id]
+        - name: location_id
           in: query
           description: Filter by location ID
           schema:
             type: integer
-        - name: include
-          in: query
-          description: Include related resources (comma-separated)
-          schema:
-            type: string
-            example: position_template,location
         - name: page[number]
           in: query
           schema:
@@ -385,6 +379,8 @@ paths:
                 $ref: '#/components/schemas/JobPostingCollection'
         '401':
           description: Unauthorized
+        '403':
+          description: Forbidden
 
     post:
       tags:
@@ -441,7 +437,7 @@ paths:
       tags:
         - Job Postings
       summary: Get a job posting
-      description: Returns a single job posting by ID
+      description: Returns a single job posting by ID (Admin/Hiring Manager only)
       operationId: getJobPosting
       security:
         - BearerAuth: []
@@ -465,6 +461,8 @@ paths:
                 $ref: '#/components/schemas/JobPosting'
         '401':
           description: Unauthorized
+        '403':
+          description: Forbidden
         '404':
           description: Not found
 
@@ -544,17 +542,17 @@ paths:
       tags:
         - Applicants
       summary: List all applicants
-      description: Returns all applicants for the authenticated user's brand
+      description: Returns all applicants for the authenticated user's brand. Interviewers only see applicants they have interviews with.
       operationId: listApplicants
       security:
         - BearerAuth: []
       parameters:
-        - name: filter[source]
+        - name: source
           in: query
           description: Filter by source
           schema:
             type: string
-        - name: filter[flagged]
+        - name: flagged
           in: query
           description: Filter flagged applicants
           schema:
@@ -626,6 +624,8 @@ paths:
                 $ref: '#/components/schemas/Applicant'
         '401':
           description: Unauthorized
+        '403':
+          description: Forbidden
         '422':
           description: Validation errors
 
@@ -634,7 +634,7 @@ paths:
       tags:
         - Applicants
       summary: Get an applicant
-      description: Returns a single applicant by ID
+      description: Returns a single applicant by ID. Interviewers only see applicants they have interviews with.
       operationId: getApplicant
       security:
         - BearerAuth: []
@@ -644,12 +644,6 @@ paths:
           required: true
           schema:
             type: integer
-        - name: include
-          in: query
-          description: Include related resources (applications)
-          schema:
-            type: string
-            example: applications
       responses:
         '200':
           description: Applicant details
@@ -702,6 +696,8 @@ paths:
                 $ref: '#/components/schemas/Applicant'
         '401':
           description: Unauthorized
+        '403':
+          description: Forbidden
         '404':
           description: Not found
         '422':
@@ -717,20 +713,25 @@ paths:
       security:
         - BearerAuth: []
       parameters:
-        - name: filter[status]
+        - name: status
           in: query
           description: Filter by status (in_progress, hired, rejected, archived)
           schema:
             type: string
             enum: [in_progress, hired, rejected, archived]
-        - name: filter[job_posting_id]
+        - name: job_posting_id
           in: query
           description: Filter by job posting ID
           schema:
             type: integer
-        - name: filter[location_id]
+        - name: location_id
           in: query
           description: Filter by location (via job posting)
+          schema:
+            type: integer
+        - name: applicant_id
+          in: query
+          description: Filter by applicant ID
           schema:
             type: integer
         - name: sort
@@ -738,13 +739,13 @@ paths:
           description: Sort field (created_at, status, applicant_name)
           schema:
             type: string
-            enum: [created_at, -created_at, status, applicant_name]
-        - name: include
+            enum: [created_at, applied_at, status, applicant_name]
+        - name: direction
           in: query
-          description: Include related resources
+          description: Sort direction (asc, desc)
           schema:
             type: string
-            example: applicant,job_posting,stage_transitions
+            enum: [asc, desc]
         - name: page[number]
           in: query
           schema:
@@ -840,12 +841,6 @@ paths:
           required: true
           schema:
             type: integer
-        - name: include
-          in: query
-          description: Include related resources
-          schema:
-            type: string
-            example: applicant,job_posting,stage_transitions,current_stage
       responses:
         '200':
           description: Application details with stage transition history
