@@ -107,6 +107,12 @@ GEM
     coderay (1.1.3)
     concurrent-ruby (1.3.6)
     connection_pool (3.0.2)
+    coveralls (0.8.23)
+      json (>= 1.8, < 3)
+      simplecov (~> 0.16.1)
+      term-ansicolor (~> 1.3)
+      thor (>= 0.19.4, < 2.0)
+      tins (~> 1.6)
     crass (1.0.6)
     database_cleaner-active_record (2.2.2)
       activerecord (>= 5.a)
@@ -126,6 +132,7 @@ GEM
       devise (>= 4.0.0, < 6.0.0)
       warden-jwt_auth (~> 0.10)
     diff-lcs (1.6.2)
+    docile (1.4.1)
     dotenv (3.2.0)
     drb (2.2.3)
     dry-auto_inject (1.1.0)
@@ -203,6 +210,7 @@ GEM
     mini_mime (1.1.5)
     minitest (6.0.1)
       prism (~> 1.5)
+    mize (0.6.1)
     msgpack (1.8.0)
     net-imap (0.6.2)
       date
@@ -312,6 +320,8 @@ GEM
       erb
       psych (>= 4.0.0)
       tsort
+    readline (0.0.4)
+      reline
     regexp_parser (2.11.3)
     reline (0.6.3)
       io-console (~> 0.5)
@@ -385,6 +395,11 @@ GEM
     securerandom (0.4.1)
     shoulda-matchers (6.5.0)
       activesupport (>= 5.2.0)
+    simplecov (0.16.1)
+      docile (~> 1.1)
+      json (>= 1.8, < 3)
+      simplecov-html (~> 0.10.0)
+    simplecov-html (0.10.2)
     solid_cache (1.0.10)
       activejob (>= 7.2)
       activerecord (>= 7.2)
@@ -415,6 +430,9 @@ GEM
     swagger_ui_engine (1.1.2)
       rails (>= 4.2)
       sass-rails
+    sync (0.5.0)
+    term-ansicolor (1.11.3)
+      tins (~> 1)
     thor (1.5.0)
     thruster (0.1.17)
     thruster (0.1.17-aarch64-linux)
@@ -422,6 +440,11 @@ GEM
     thruster (0.1.17-x86_64-linux)
     tilt (2.7.0)
     timeout (0.6.0)
+    tins (1.51.1)
+      bigdecimal
+      mize (~> 0.6)
+      readline
+      sync
     tsort (0.2.0)
     tzinfo (2.0.6)
       concurrent-ruby (~> 1.0)
@@ -460,6 +483,7 @@ DEPENDENCIES
   bcrypt (~> 3.1.7)
   bootsnap
   brakeman
+  coveralls
   database_cleaner-active_record (~> 2.2)
   debug
   devise (~> 4.9)
