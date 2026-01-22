@@ -44,7 +44,7 @@ gem "aasm", "~> 5.5"
 gem "jsonapi-serializer", "~> 2.2"
 
 # Pagination
-gem "pagy", "~> 8.0"
+gem "pagy", "~> 43.2"
 
 # Background jobs (using solid_queue instead of sidekiq for Rails 8)
 # Note: solid_queue already included above
