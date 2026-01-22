@@ -2,18 +2,18 @@ openapi: 3.0.3
 info:
   title: WS-HR Management System API
   description: |
-    HR/Hiring Management System MVP API
+    Hiring Management System MVP API
     
     This API provides endpoints for managing the complete hiring workflow:
     - Position Templates → Job Postings → Applications → Stage Management
     
     **Authentication**: JWT-based authentication via `/api/v1/auth/login`
     
-    **Multi-tenant**: All data is automatically scoped by the authenticated user's brand
+    **Multi-tenant(brand)**: All data is automatically scoped by the authenticated user's brand
     
     **Future Development**:
-    - Phase 9 (US6): Availability Slots - Interviewers can set their availability
-    - Phase 10 (US7): Interview Scheduling - Schedule interviews with candidates
+    - Availability Slots - Interviewers can set their availability
+    - Interview Scheduling - Schedule interviews with candidates
     
   version: 1.0.0
   contact:
