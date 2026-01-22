@@ -1,3 +1,5 @@
+Coveralls Coverage:
+
 [![Coverage Status](https://coveralls.io/repos/github/curtiskim808/ws-hr/badge.svg?branch=HEAD)](https://coveralls.io/github/curtiskim808/ws-hr?branch=HEAD)
 
 # WS-HIRING-MGMT-APP
@@ -48,7 +50,9 @@ Position Templates -> Job Positions -> Applicants -> Interview Scheduling -> Hir
 ```bash
 # 1. Clone the repository
 git clone <repository-url>
-cd ws-hr-mgmt
+cd ws-hr
+
+# Run Docker
 
 # 2. Create .env file (see SETUP.md for details)
 cp .env.example .env
@@ -65,6 +69,8 @@ docker-compose up --build
 # 4. Access the API (wait a few seconds for services to start)
 curl http://localhost:3000/api-docs
 
+# Stop services
+docker-compose down
 
 # 5. Trouble shooting when A server is already running (pid: 1 ...)
 
@@ -75,7 +81,7 @@ rm ./tmp/pids/server.pid
 
 ```bash
 git clone <repository-url>
-cd ws-hr-mgmt
+cd ws-hr
 
 cp .env.example .env
 mise install
