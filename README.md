@@ -1,3 +1,5 @@
+[![Coverage Status](https://coveralls.io/repos/github/curtiskim808/ws-hr/badge.svg?branch=HEAD)](https://coveralls.io/github/curtiskim808/ws-hr?branch=HEAD)
+
 # WS-HIRING-MGMT-APP
 
 A Rails 8 application for managing hiring processes, job postings, applications, and candidate workflows.

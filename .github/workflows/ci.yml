@@ -5,6 +5,9 @@ on:
   push:
     branches: [ master, develop ]
 
+permissions:
+  contents: read
+
 jobs:
   lint:
     runs-on: ubuntu-latest
@@ -23,9 +26,39 @@ jobs:
 
   test:
     runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:15
+        ports:
+          - 5432:5432
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: ws_hr_app_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      RAILS_ENV: test
+      DATABASE_URL: postgres://postgres:postgres@localhost:5432/ws_hr_app_test
+      COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
+
     steps:
-      - name: Upload coverage to Coveralls
-        if: always()
-        uses: coverallsapp/github-action@v2
+      - uses: actions/checkout@v4
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          ruby-version: 3.4.1
+          bundler-cache: true
+
+      - name: Set up database
+        run: |
+          bin/rails db:create db:schema:load
+
+      - name: Run tests
+        run: bundle exec rspec

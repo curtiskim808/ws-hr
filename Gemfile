@@ -78,3 +78,8 @@ group :development do
   gem "listen", "~> 3.8"
   gem "swagger_ui_engine", "~> 1.1.2"
 end
+
+group :test do
+  gem "simplecov", require: false
+  gem "coveralls_reborn", require: false
+end
