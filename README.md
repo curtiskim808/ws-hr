@@ -16,7 +16,7 @@ A Rails 8 application for managing hiring processes, job postings, applications,
 - [Project Structure](#project-structure)
 - [API Overview](#api-overview)
 - [Database Design](#database-design)
-- [Testing](#testing)
+- [Testing + (cURL or Postman)](#testing)
 - [Database](#database)
 - [Environment Variables](#environment-variables)
 - [Future Development](#future-development)
@@ -66,13 +66,13 @@ docker-compose up --build
 # - Solid Queue waits for web service to complete migrations before starting
 # - Database is automatically seeded on first run
 
-# 4. Access the API (wait a few seconds for services to start)
-curl http://localhost:3000/api-docs
+# 4. Access the API (wait a few seconds for services to start) Check API Documents
+http://localhost:3000/api-docs
 
 # Stop services
 docker-compose down
 
-# 5. Trouble shooting when A server is already running (pid: 1 ...)
+# Trouble shooting when A server is already running (pid: 1 ...)
 
 rm ./tmp/pids/server.pid
 ```
