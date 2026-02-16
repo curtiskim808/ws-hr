@@ -34,7 +34,7 @@ gem "thruster", require: false
 # gem "rack-cors"
 
 # Authentication & Authorization
-gem "devise", "~> 4.9"
+gem "devise", "~> 5.0"
 gem "devise-jwt", "~> 0.11"
 
 # State machines
