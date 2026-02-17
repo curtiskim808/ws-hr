@@ -242,7 +242,10 @@ GEM
       racc (~> 1.4)
     orm_adapter (0.5.0)
     ostruct (0.6.3)
-    pagy (8.6.3)
+    pagy (43.2.10)
+      json
+      uri
+      yaml
     parallel (1.27.0)
     parser (3.3.10.1)
       ast (~> 2.4.1)
@@ -464,6 +467,7 @@ GEM
       base64
       websocket-extensions (>= 0.1.0)
     websocket-extensions (0.1.5)
+    yaml (0.4.0)
     zeitwerk (2.7.4)
 
 PLATFORMS
@@ -491,7 +495,7 @@ DEPENDENCIES
   jsonapi-serializer (~> 2.2)
   kamal
   listen (~> 3.8)
-  pagy (~> 8.0)
+  pagy (~> 43.2)
   pg (~> 1.1)
   pry
   pry-byebug
