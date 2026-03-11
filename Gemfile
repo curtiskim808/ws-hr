@@ -68,7 +68,7 @@ group :development, :test do
   gem "rubocop-rails-omakase", require: false
 
   # Testing framework
-  gem "rspec-rails", "~> 7.0"
+  gem "rspec-rails", "~> 8.0"
   gem "shoulda-matchers", "~> 6.0"
   gem "database_cleaner-active_record", "~> 2.2"
   gem "rswag-specs"
