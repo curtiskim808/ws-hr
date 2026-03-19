@@ -50,7 +50,7 @@ gem "pagy", "~> 8.0"
 # Note: solid_queue already included above
 
 # AWS SNS for notifications
-gem "aws-sdk-sns", "~> 1.70"
+gem "aws-sdk-sns", "~> 1.113"
 
 gem "rswag-ui"
 
